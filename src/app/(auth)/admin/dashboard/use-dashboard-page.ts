@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAuth, signOut } from 'firebase/auth';
 import { ref, onValue, off, get } from 'firebase/database';
@@ -13,6 +13,8 @@ export function UseDashboardPage() {
     const [todayPresence, setTodayPresence] = useState<any[]>([]);
     const [weeklyData, setWeeklyData] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [pieChartData, setPieChartData] = useState<{ label: string; value: number }[]>([]);
+
 
     // Format date to YYYY-MM-DD
     const getFormattedDate = (date: Date): string => {
@@ -27,7 +29,7 @@ export function UseDashboardPage() {
     const todayFormatted = getFormattedDate(today);
 
     // Get the dates for the past week
-    const pastWeekDates = (() => {
+    const getPastWeekDates = () => {
         const dates = [];
         for (let i = 6; i >= 0; i--) {
             const date = new Date();
@@ -35,7 +37,9 @@ export function UseDashboardPage() {
             dates.push(getFormattedDate(date));
         }
         return dates;
-    })();
+    };
+
+    const pastWeekDates = getPastWeekDates();
 
     // Format time
     const formatTime = (timestamp: number): string => {
@@ -50,7 +54,6 @@ export function UseDashboardPage() {
         const date = new Date(dateStr);
         return date.toLocaleDateString('id-ID', { weekday: 'long' });
     };
-
 
 
     // Fetch data from Firebase
@@ -79,6 +82,7 @@ export function UseDashboardPage() {
             console.error('Error fetching lecturers:', err);
         });
 
+        // Fetch today's presence
         const presenceRef = ref(database, `lecturer_presence/${todayFormatted}`);
 
         const handlePresenceData = (snapshot: any) => {
@@ -104,7 +108,8 @@ export function UseDashboardPage() {
             console.error('Error fetching presence:', err);
         });
 
-        const fetchWeeklyData = useCallback(async () => {
+        // Fetch weekly attendance data
+        const fetchWeeklyData = async () => {
             try {
                 const weekData = [];
 
@@ -127,7 +132,7 @@ export function UseDashboardPage() {
             } catch (error) {
                 console.error('Error fetching weekly data:', error);
             }
-        }, [pastWeekDates, lecturers]);
+        };
 
         // Wait for lecturers data before fetching weekly data
         if (lecturers.length > 0) {
@@ -146,7 +151,8 @@ export function UseDashboardPage() {
     const presentToday = lecturers.filter(l => l.status === 'hadir').length;
     const presentPercentage = totalLecturers > 0 ? Math.round((presentToday / totalLecturers) * 100) : 0;
 
-    const avgArrivalTime = useMemo(() => {
+    // Calculate average arrival time
+    const calculateAvgArrivalTime = () => {
         if (todayPresence.length === 0) return "00:00";
 
         let totalMinutes = 0;
@@ -161,17 +167,20 @@ export function UseDashboardPage() {
         const minutes = avgMinutes % 60;
 
         return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-    }, [todayPresence]);
+    };
 
+    const avgArrivalTime = calculateAvgArrivalTime();
 
-    const pieChartData = useMemo(() => {
-        [
-            { name: 'Hadir', value: presentToday },
-            { name: 'Tidak Hadir', value: totalLecturers - presentToday }
-        ]
-    }, [presentToday, totalLecturers]);
+    // Chart data
+    useEffect(() => {
+        setPieChartData([
+            { label: 'Hadir', value: 10 },
+            { label: 'Tidak Hadir', value: 5 }
+          ]);
+    }, [])
 
-    const mostActiveDay = useMemo(() => {
+    // Determine most active day
+    const getMostActiveDay = () => {
         if (weeklyData.length === 0) return "Belum Ada Data";
 
         let maxPresent = 0;
@@ -185,9 +194,12 @@ export function UseDashboardPage() {
         });
 
         return mostActiveDay;
-    }, [weeklyData]);
+    };
 
-    const arrivalDistribution = useMemo(() => {
+    const mostActiveDay = getMostActiveDay();
+
+    // Generate arrival time distribution
+    const generateArrivalDistribution = () => {
         const distribution = [
             { time: '07:00-08:00', count: 0 },
             { time: '08:00-09:00', count: 0 },
@@ -207,8 +219,11 @@ export function UseDashboardPage() {
         });
 
         return distribution;
-    }, [todayPresence]);
+    };
 
+    const arrivalDistribution = generateArrivalDistribution();
+
+    // Colors for pie chart
     const COLORS = ['#0088FE', '#FFBB28'];
 
     return {
