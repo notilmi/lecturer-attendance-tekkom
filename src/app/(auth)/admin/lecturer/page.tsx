@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { Loader2, PlusCircle } from "lucide-react";
 import { DataTable } from "../_components/data-table";
@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { FormDialog } from "./_components/form-dialog";
 import { ConfirmDialog } from "@/app/(auth)/admin/_components/confirm-dialog";
 import { UseLecturePage } from "./use-lecture-page";
+import { Header } from "../_components/header";
 
 export default function lecturer() {
   const {
@@ -32,29 +33,31 @@ export default function lecturer() {
   }
 
   return (
-    <div className="p-4">
-      <div className="flex justify-between">
-        <h1 className="text-xl font-semibold mb-4">Data Dosen</h1>
-        <Button onClick={() => setOpenForm(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Tambah Dosen
-        </Button>
+    <div className="flex min-h-screen bg-background">
+      <div className="p-4 flex-1 flex flex-col">
+        <Header title="Data Dosen" />
+        <div className="flex justify-end py-4">
+          <Button onClick={() => setOpenForm(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Tambah Dosen
+          </Button>
+        </div>
+        <DataTable columns={columns} data={data} />
+
+        <FormDialog
+          open={openForm}
+          onOpenChange={setOpenForm}
+          formData={formData}
+          onChange={handleChange}
+          onSubmit={handleSubmit}
+        />
+
+        <ConfirmDialog
+          open={openConfirm}
+          onOpenChange={setOpenConfirm}
+          onConfirm={handleDelete}
+        />
       </div>
-      <DataTable columns={columns} data={data} />
-
-      <FormDialog
-        open={openForm}
-        onOpenChange={setOpenForm}
-        formData={formData}
-        onChange={handleChange}
-        onSubmit={handleSubmit}
-      />
-
-      <ConfirmDialog
-        open={openConfirm}
-        onOpenChange={setOpenConfirm}
-        onConfirm={handleDelete}
-      />
     </div>
   );
 }

@@ -22,7 +22,7 @@ export default function ProtectedRoute({
 
   if (loading || !user)
     return (
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="animate-spin w-6 h-6" />
         <span className="ml-2">Loading...</span>
       </div>
