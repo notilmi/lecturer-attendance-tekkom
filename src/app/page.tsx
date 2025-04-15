@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/contexts/auth-context";
 import { UsePresenceSync } from "@/hooks/use-presence-sync";
 import { database } from "@/lib/firebase";
 import { LecturerPresence } from "@/lib/types/lecture-presence";
@@ -38,6 +39,8 @@ export default function Home() {
   const [todayPresence, setTodayPresence] = useState<LecturerPresence[]>([]);
   const [isLoadingLecturers, setIsLoadingLecturers] = useState(true);
   const [isLoadingPresence, setIsLoadingPresence] = useState(true);
+
+  const { user, loading } = useAuth();
 
   UsePresenceSync();
 
@@ -137,11 +140,20 @@ export default function Home() {
             <Clock className="h-5 w-5 text-primary" />
             <span>Sistem Absensi Dosen</span>
           </div>
-          <Link href="/admin/dashboard" passHref>
-            <Button variant="outline" size="sm">
-              Admin Login
-            </Button>
-          </Link>
+
+          {user ? (
+            <Link href="/admin/dashboard" passHref>
+              <Button variant="outline" size="sm">
+                {user?.email}
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/admin/dashboard" passHref>
+              <Button variant="outline" size="sm">
+                Admin Login
+              </Button>
+            </Link>
+          )}
         </div>
       </header>
 
