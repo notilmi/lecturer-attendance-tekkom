@@ -1,6 +1,6 @@
 "use client";
 
-import { HeaderArea } from "./_components/header-area";
+import { Header } from "../_components/header";
 import { TabsArea } from "./_components/tabs-area";
 
 export default function AdminDashboard() {
@@ -25,7 +25,7 @@ export default function AdminDashboard() {
 
         {/* Content Area */}
         <div className="flex-1 p-6 overflow-auto">
-          <HeaderArea />
+          <Header title="Dashboard" />
           <TabsArea />
         </div>
       </div>
