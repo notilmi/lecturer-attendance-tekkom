@@ -5,7 +5,7 @@ import { AttendanceTab } from "./attendance-tab";
 import { RfidSimulator } from "@/components/admin/rfid-simulator";
 import { UseDashboardPage } from "../use-dashboard-page";
 
-export function tabs() {
+export function TabsArea() {
 
     const { activeTab, setActiveTab } = UseDashboardPage()
 
