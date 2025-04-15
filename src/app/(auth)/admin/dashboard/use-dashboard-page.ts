@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAuth, signOut } from 'firebase/auth';
 import { ref, onValue, off, get } from 'firebase/database';
@@ -27,7 +27,7 @@ export function UseDashboardPage() {
     const todayFormatted = getFormattedDate(today);
 
     // Get the dates for the past week
-    const getPastWeekDates = () => {
+    const pastWeekDates = (() => {
         const dates = [];
         for (let i = 6; i >= 0; i--) {
             const date = new Date();
@@ -35,9 +35,7 @@ export function UseDashboardPage() {
             dates.push(getFormattedDate(date));
         }
         return dates;
-    };
-
-    const pastWeekDates = getPastWeekDates();
+    })();
 
     // Format time
     const formatTime = (timestamp: number): string => {
@@ -53,16 +51,7 @@ export function UseDashboardPage() {
         return date.toLocaleDateString('id-ID', { weekday: 'long' });
     };
 
-    // Handle logout
-    const handleLogout = async () => {
-        try {
-            const auth = getAuth();
-            await signOut(auth);
-            router.push('/auth/login');
-        } catch (error) {
-            console.error('Logout error:', error);
-        }
-    };
+
 
     // Fetch data from Firebase
     useEffect(() => {
@@ -90,7 +79,6 @@ export function UseDashboardPage() {
             console.error('Error fetching lecturers:', err);
         });
 
-        // Fetch today's presence
         const presenceRef = ref(database, `lecturer_presence/${todayFormatted}`);
 
         const handlePresenceData = (snapshot: any) => {
@@ -116,8 +104,7 @@ export function UseDashboardPage() {
             console.error('Error fetching presence:', err);
         });
 
-        // Fetch weekly attendance data
-        const fetchWeeklyData = async () => {
+        const fetchWeeklyData = useCallback(async () => {
             try {
                 const weekData = [];
 
@@ -140,7 +127,7 @@ export function UseDashboardPage() {
             } catch (error) {
                 console.error('Error fetching weekly data:', error);
             }
-        };
+        }, [pastWeekDates, lecturers]);
 
         // Wait for lecturers data before fetching weekly data
         if (lecturers.length > 0) {
@@ -159,8 +146,7 @@ export function UseDashboardPage() {
     const presentToday = lecturers.filter(l => l.status === 'hadir').length;
     const presentPercentage = totalLecturers > 0 ? Math.round((presentToday / totalLecturers) * 100) : 0;
 
-    // Calculate average arrival time
-    const calculateAvgArrivalTime = () => {
+    const avgArrivalTime = useMemo(() => {
         if (todayPresence.length === 0) return "00:00";
 
         let totalMinutes = 0;
@@ -175,18 +161,17 @@ export function UseDashboardPage() {
         const minutes = avgMinutes % 60;
 
         return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-    };
+    }, [todayPresence]);
 
-    const avgArrivalTime = calculateAvgArrivalTime();
 
-    // Chart data
-    const pieChartData = [
-        { name: 'Hadir', value: presentToday },
-        { name: 'Tidak Hadir', value: totalLecturers - presentToday }
-    ];
+    const pieChartData = useMemo(() => {
+        [
+            { name: 'Hadir', value: presentToday },
+            { name: 'Tidak Hadir', value: totalLecturers - presentToday }
+        ]
+    }, [presentToday, totalLecturers]);
 
-    // Determine most active day
-    const getMostActiveDay = () => {
+    const mostActiveDay = useMemo(() => {
         if (weeklyData.length === 0) return "Belum Ada Data";
 
         let maxPresent = 0;
@@ -200,12 +185,9 @@ export function UseDashboardPage() {
         });
 
         return mostActiveDay;
-    };
+    }, [weeklyData]);
 
-    const mostActiveDay = getMostActiveDay();
-
-    // Generate arrival time distribution
-    const generateArrivalDistribution = () => {
+    const arrivalDistribution = useMemo(() => {
         const distribution = [
             { time: '07:00-08:00', count: 0 },
             { time: '08:00-09:00', count: 0 },
@@ -225,11 +207,8 @@ export function UseDashboardPage() {
         });
 
         return distribution;
-    };
+    }, [todayPresence]);
 
-    const arrivalDistribution = generateArrivalDistribution();
-
-    // Colors for pie chart
     const COLORS = ['#0088FE', '#FFBB28'];
 
     return {
@@ -242,9 +221,9 @@ export function UseDashboardPage() {
         presentPercentage,
         formatTime,
         activeTab,
-        setActiveTab, 
+        setActiveTab,
         isLoading,
-        setIsLoading, 
+        setIsLoading,
         lecturers,
         setLecturers,
         weeklyData,
