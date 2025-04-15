@@ -141,19 +141,27 @@ export default function Home() {
             <span>Sistem Absensi Dosen</span>
           </div>
 
-          {user ? (
-            <Link href="/admin/dashboard" passHref>
-              <Button variant="outline" size="sm">
-                {user?.email}
-              </Button>
-            </Link>
-          ) : (
-            <Link href="/admin/dashboard" passHref>
-              <Button variant="outline" size="sm">
-                Admin Login
-              </Button>
-            </Link>
-          )}
+          <div className="flex items-center gap-2">
+            {user ? (
+              <>
+                <Button variant="outline" size="sm">
+                  <User className="mx-auto h-10 w-10 text-muted-foreground" />
+                  <p className="font-medium text-sm">{user?.email}</p>
+                </Button>
+                <Link href="/admin/dashboard" passHref>
+                  <Button variant="outline" size="sm">
+                    Dashboard
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <Link href="/admin/dashboard" passHref>
+                <Button variant="outline" size="sm">
+                  Admin Login
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
       </header>
 
