@@ -5,6 +5,8 @@ export interface Lecturer {
   rfidUid: string;
   status: "hadir" | "tidak hadir";
   lastUpdated?: number;
+  // Tambahkan informasi jadwal mengajar (hari)
+  teachingDays: string[]; // Array hari mengajar: ["Senin", "Rabu", dll]
 }
 
 export interface LecturerPresence {
