@@ -10,7 +10,6 @@ import {
   Bar,
   PieChart,
   Pie,
-  Cell,
   ResponsiveContainer,
   XAxis,
   YAxis,

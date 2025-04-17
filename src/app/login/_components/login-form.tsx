@@ -110,7 +110,7 @@ export default function LoginForm() {
 
       <CardFooter className="flex flex-col">
         <p className="mt-2 text-center text-sm text-muted-foreground">
-          RFID Attendance System © 2025
+          Informasi Kehadiran Dosen © 2025
         </p>
       </CardFooter>
     </Card>
