@@ -1,12 +1,13 @@
 "use client";
 
-import { Loader2, PlusCircle } from "lucide-react";
+import { Loader2, PlusCircle, Search } from "lucide-react";
 import { DataTable } from "../_components/data-table";
 import { Button } from "@/components/ui/button";
 import { FormDialog } from "./_components/form-dialog";
 import { ConfirmDialog } from "@/app/(auth)/admin/_components/confirm-dialog";
 import { UseLecturePage } from "./use-lecture-page";
 import { Header } from "../_components/header";
+import { Input } from "@/components/ui/input";
 
 export default function lecturer() {
   const {
@@ -21,6 +22,8 @@ export default function lecturer() {
     setOpenConfirm,
     openConfirm,
     handleDelete,
+    searchQuery,
+    setSearchQuery,
   } = UseLecturePage();
 
   if (loading) {
@@ -36,7 +39,16 @@ export default function lecturer() {
     <div className="flex min-h-screen bg-background">
       <div className="p-4 flex-1 flex flex-col">
         <Header title="Data Dosen" />
-        <div className="flex justify-end py-4">
+        <div className="flex justify-between py-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Cari dosen..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="max-w-md"
+            />
+          </div>
           <Button onClick={() => setOpenForm(true)}>
             <PlusCircle className="mr-2 h-4 w-4" />
             Tambah Dosen
