@@ -53,7 +53,7 @@ const data = {
     },
     {
       title: "Presence",
-      url: "/admin/presence",
+      url: "/admin/attendance",
       icon: IconChartBar,
     },
   ],
