@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
 import { useLectureColumn } from "./_components/columns";
-import { Lecturer } from "@/lib/schema/lecturer";
+import { Lecturer, lecturerSchema } from "@/lib/schema/lecturer";
 import { UseLecturer } from "@/hooks/use-lecturer";
+import { z } from "zod";
 
 export function UseLecturePage() {
   const { getLecturers, deleteLecturer, updateLecturer, createLecturer } = UseLecturer();
@@ -9,24 +10,33 @@ export function UseLecturePage() {
   const [openConfirm, setOpenConfirm] = useState(false);
   const [formData, setFormData] = useState<Partial<Lecturer & { id?: string }>>({});
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }, [])
 
+
   const handleSubmit = useCallback(() => {
-    const { name, lecturerCode, rfidUid, status, id } = formData;
+    try {
+      const validatedData = lecturerSchema.parse(formData)
 
-    if (!name || !lecturerCode || !rfidUid || !status) return;
 
-    if (id) {
-      updateLecturer.mutate({ id, name, lecturerCode, rfidUid, status });
-    } else {
-      createLecturer.mutate({ name, lecturerCode, rfidUid, status });
+      if (formData.id) {
+        updateLecturer.mutate({ id: formData.id, ...validatedData });
+      } else {
+        createLecturer.mutate(validatedData);
+      }
+
+      setOpenForm(false);
+      setFormData({});
+    } catch (error) {
+      if(error instanceof z.ZodError) {
+        console.error("validation error:", error.errors)
+      }
     }
 
-    setOpenForm(false);
-    setFormData({});
   }, [formData]);
 
   const handleEdit = useCallback((lecturer: Lecturer & { id: string }) => {
@@ -51,6 +61,17 @@ export function UseLecturePage() {
 
   const data = useMemo(() => getLecturers.data || [], [getLecturers.data]);
 
+  const filteredLecturers = useMemo(() => {
+    const lecturers = getLecturers.data || [];
+
+    if(!searchQuery) return lecturers;
+
+    return lecturers.filter((lecturer) =>
+      lecturer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lecturer.lecturerCode.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [getLecturers.data, searchQuery])
+
   return {
     handleChange,
     handleSubmit,
@@ -63,6 +84,9 @@ export function UseLecturePage() {
     openForm,
     setOpenForm,
     loading: getLecturers.isLoading,
-    formData
+    formData,
+    searchQuery, 
+    setSearchQuery,
+    filteredLecturers,
   }
 }
