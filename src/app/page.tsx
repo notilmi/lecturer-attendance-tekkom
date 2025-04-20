@@ -15,6 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { LecturerPresence } from "@/lib/types/lecture-presence"
 import { getDayName } from '@/utils/day-utils';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function HomePage() {
   const [lecturers, setLecturers] = useState<Lecturer[]>([]);
@@ -22,6 +23,8 @@ export default function HomePage() {
   const [isLoadingLecturers, setIsLoadingLecturers] = useState(true);
   const [isLoadingPresence, setIsLoadingPresence] = useState(true);
   const [showOnlyScheduled, setShowOnlyScheduled] = useState(false);
+
+  const { user } = useAuth()
   
   // Get current day name
   const today = new Date();
@@ -156,11 +159,27 @@ export default function HomePage() {
             <span>Sistem Absensi Dosen</span>
           </div>
           
-          <Link href="/admin/dashboard" passHref>
-            <Button variant="outline" size="sm">
-              Admin Login
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            {user ? (
+              <>
+                <Button variant="outline" size="sm">
+                  <User className="mx-auto h-10 w-10 text-muted-foreground" />
+                  <p className="font-medium text-sm">{user?.email}</p>
+                </Button>
+                <Link href="/admin/dashboard" passHref>
+                  <Button variant="outline" size="sm">
+                    Dashboard
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <Link href="/admin/dashboard" passHref>
+                <Button variant="outline" size="sm">
+                  Admin Login
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
       </header>
       
