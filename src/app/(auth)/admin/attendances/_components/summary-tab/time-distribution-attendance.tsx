@@ -1,8 +1,8 @@
-import { UseAttendancePage } from "../../use-attendance-page";
+import { useAttendancePage } from "../../use-attendance-page";
 
 export function TimeDistributionAttendance() {
   const { selectedDate, attendanceData, summary, isLoadingData } =
-    UseAttendancePage();
+    useAttendancePage();
   return (
     selectedDate &&
     attendanceData.length > 0 && (

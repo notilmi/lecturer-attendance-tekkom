@@ -3,10 +3,9 @@ import { LecturePresence } from "@/lib/schema/lecture-presence";
 import { get, ref, remove } from "firebase/database";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { formatTime } from "./utils";
+import { formatTime } from "@/app/(auth)/admin/attendances/utils";
 
-export function UseAttendancePage() {
-
+export function useAttendancePage() {
     const [dates, setDates] = useState<string[]>([]);
     const [selectedDate, setSelectedDate] = useState<string>("");
     const [attendanceData, setAttendanceData] = useState<LecturePresence[]>([]);
@@ -21,9 +20,16 @@ export function UseAttendancePage() {
     const [summary, setSummary] = useState<{ [key: string]: number }>({
         total: 0,
         present: 0,
+        checkedIn: 0,
+        checkedOut: 0,
         scheduled: 0,
         unscheduled: 0,
     });
+
+    // Check if lecturer is present (has checked in or already checked out)
+    const isLecturerPresent = (record: LecturePresence): boolean => {
+        return record.status === 'masuk' || record.status === 'pulang' || record.status === 'hadir';
+    };
 
     // Fetch available dates
     useEffect(() => {
@@ -73,28 +79,41 @@ export function UseAttendancePage() {
                     const formattedData = Object.keys(data).map((key) => ({
                         lecturerId: key,
                         ...data[key],
+                        // Ensure optional fields exist
+                        checkInTime: data[key].checkInTime || null,
+                        checkOutTime: data[key].checkOutTime || null,
+                        isScheduled: data[key].isScheduled || false
                     }));
 
-                    // Sort by time
-                    formattedData.sort((a, b) => b.time - a.time);
+                    // Sort by lastUpdated or time (most recent first)
+                    formattedData.sort((a, b) => (b.lastUpdated || b.time || 0) - (a.lastUpdated || a.time || 0));
 
                     setAttendanceData(formattedData);
 
                     // Calculate summary
                     const summaryData = {
                         total: formattedData.length,
-                        present: formattedData.filter((record) => record.status === "hadir")
-                            .length,
-                        scheduled: formattedData.filter((record) => record.isScheduled)
-                            .length,
-                        unscheduled: formattedData.filter((record) => !record.isScheduled)
-                            .length,
+                        // Count records with status masuk, pulang, or hadir as present
+                        present: formattedData.filter(record => isLecturerPresent(record)).length,
+                        // Count by specific status
+                        checkedIn: formattedData.filter(record => record.status === "masuk").length,
+                        checkedOut: formattedData.filter(record => record.status === "pulang").length,
+                        // Count by schedule
+                        scheduled: formattedData.filter(record => record.isScheduled).length,
+                        unscheduled: formattedData.filter(record => !record.isScheduled).length,
                     };
 
                     setSummary(summaryData);
                 } else {
                     setAttendanceData([]);
-                    setSummary({ total: 0, present: 0, scheduled: 0, unscheduled: 0 });
+                    setSummary({ 
+                        total: 0, 
+                        present: 0, 
+                        checkedIn: 0, 
+                        checkedOut: 0, 
+                        scheduled: 0, 
+                        unscheduled: 0 
+                    });
                 }
             } catch (error) {
                 console.error("Error fetching attendance data:", error);
@@ -134,19 +153,31 @@ export function UseAttendancePage() {
                 prev.filter((item) => item.lecturerId !== selectedRecord.lecturerId)
             );
 
-            // Update summary
-            setSummary((prev) => ({
-                ...prev,
-                total: prev.total - 1,
-                present:
-                    selectedRecord.status === "hadir" ? prev.present - 1 : prev.present,
-                scheduled: selectedRecord.isScheduled
-                    ? prev.scheduled - 1
-                    : prev.scheduled,
-                unscheduled: !selectedRecord.isScheduled
-                    ? prev.unscheduled - 1
-                    : prev.unscheduled,
-            }));
+            // Update summary based on the deleted record
+            setSummary((prev) => {
+                const updatedSummary = { ...prev };
+                updatedSummary.total -= 1;
+                
+                // Update status counts
+                if (isLecturerPresent(selectedRecord)) {
+                    updatedSummary.present -= 1;
+                }
+                
+                if (selectedRecord.status === "masuk") {
+                    updatedSummary.checkedIn -= 1;
+                } else if (selectedRecord.status === "pulang") {
+                    updatedSummary.checkedOut -= 1;
+                }
+                
+                // Update scheduled counts
+                if (selectedRecord.isScheduled) {
+                    updatedSummary.scheduled -= 1;
+                } else {
+                    updatedSummary.unscheduled -= 1;
+                }
+                
+                return updatedSummary;
+            });
 
             setSelectedRecord(null);
         } catch (error: any) {
@@ -163,16 +194,56 @@ export function UseAttendancePage() {
     const exportToCSV = () => {
         if (!selectedDate || attendanceData.length === 0) return;
 
-        const headers = ["Nama", "Kode Dosen", "Waktu", "Status", "Sesuai Jadwal"];
+        const headers = [
+            "Nama", 
+            "Kode Dosen", 
+            "Status", 
+            "Check-in", 
+            "Check-out", 
+            "Terakhir Update", 
+            "Sesuai Jadwal"
+        ];
 
         const csvRows = [
             headers.join(","),
             ...filteredAttendance.map((record) => {
+                const status = 
+                    record.status === "masuk" ? "Check-in" :
+                    record.status === "pulang" ? "Check-out" :
+                    record.status === "hadir" ? "Hadir" : "Tidak Hadir";
+                
+                // For check-in time, use stored value or generate from timestamp
+                let checkInTime = "";
+                if (record.checkInTime) {
+                    checkInTime = record.checkInTime;
+                } else if (record.status === "masuk") {
+                    const timestamp = record.lastUpdated || record.time;
+                    if (timestamp) {
+                        checkInTime = formatTime(timestamp);
+                    }
+                }
+                
+                // For check-out time, use stored value or generate from timestamp
+                let checkOutTime = "";
+                if (record.checkOutTime) {
+                    checkOutTime = record.checkOutTime;
+                } else if (record.status === "pulang") {
+                    const timestamp = record.lastUpdated || record.time;
+                    if (timestamp) {
+                        checkOutTime = formatTime(timestamp);
+                    }
+                }
+                
+                // Use lastUpdated or time, with fallback
+                const lastUpdate = formatTime(record.lastUpdated || record.time || 0);
+                
                 const row = [
                     `"${record.name}"`,
                     record.lecturerCode,
-                    formatTime(record.time),
-                    record.status,
+                    status,
+                    checkInTime,
+                    checkOutTime,
+                    lastUpdate,
                     record.isScheduled ? "Ya" : "Tidak",
                 ];
                 return row.join(",");
@@ -193,6 +264,20 @@ export function UseAttendancePage() {
         toast("Berhasil", {
             description: "Data kehadiran berhasil diunduh.",
         });
+    };
+
+    // Get status display text
+    const getStatusDisplay = (status: string): string => {
+        switch (status) {
+            case 'masuk':
+                return 'Check-in';
+            case 'pulang':
+                return 'Check-out';
+            case 'hadir':
+                return 'Hadir';
+            default:
+                return 'Tidak Hadir';
+        }
     };
 
     return {
@@ -217,6 +302,8 @@ export function UseAttendancePage() {
         filteredAttendance,
         handleDeleteRecord,
         exportToCSV,
-        setSelectedRecord
-    }
+        setSelectedRecord,
+        isLecturerPresent,
+        getStatusDisplay
+    };
 }

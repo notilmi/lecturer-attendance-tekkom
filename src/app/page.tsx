@@ -11,21 +11,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, Clock, Filter, User } from "lucide-react";
+import { CalendarIcon, Clock, Filter, User, LogIn, LogOut } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ref, onValue, off } from "firebase/database";
 import { database } from "@/lib/firebase/";
-import { Lecturer } from "@/lib/types/lecturer";
+import { Lecturer } from "@/lib/schema/lecturer";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { LecturerPresence } from "@/lib/types/lecture-presence";
+import { LecturePresence } from "@/lib/schema/lecture-presence";
 import { getDayName } from "@/utils/day-utils";
 import { useAuth } from "@/contexts/auth-context";
 
 export default function HomePage() {
   const [lecturers, setLecturers] = useState<Lecturer[]>([]);
-  const [todayPresence, setTodayPresence] = useState<LecturerPresence[]>([]);
+  const [todayPresence, setTodayPresence] = useState<LecturePresence[]>([]);
   const [isLoadingLecturers, setIsLoadingLecturers] = useState(true);
   const [isLoadingPresence, setIsLoadingPresence] = useState(true);
   const [showOnlyScheduled, setShowOnlyScheduled] = useState(false);
@@ -50,14 +50,22 @@ export default function HomePage() {
     return lecturer.teachingDays?.includes(currentDay) || false;
   };
 
+  // Determine if a lecturer is present (either checked in or stayed)
+  const isLecturerPresent = (lecturer: Lecturer) => {
+    // If status is 'masuk' (checked in) OR 'pulang' (checked out), consider them present
+    return lecturer.status === "masuk" || lecturer.status === "pulang" || lecturer.status === "hadir";
+  };
+
   // Filter lecturers based on teaching schedule and presence
   const getFilteredLecturers = () => {
     if (!showOnlyScheduled) {
       // Show all lecturers, but prioritize those with schedule today
       return [...lecturers].sort((a, b) => {
-        // First sort by presence status (hadir first)
-        if (a.status === "hadir" && b.status !== "hadir") return -1;
-        if (a.status !== "hadir" && b.status === "hadir") return 1;
+        // First sort by presence status (present first)
+        const aIsPresent = isLecturerPresent(a);
+        const bIsPresent = isLecturerPresent(b);
+        if (aIsPresent && !bIsPresent) return -1;
+        if (!aIsPresent && bIsPresent) return 1;
 
         // Then sort by teaching schedule (today's schedule first)
         const aHasSchedule = hasTeachingScheduleToday(a);
@@ -73,12 +81,14 @@ export default function HomePage() {
       return lecturers
         .filter(
           (lecturer) =>
-            hasTeachingScheduleToday(lecturer) || lecturer.status === "hadir"
+            hasTeachingScheduleToday(lecturer) || isLecturerPresent(lecturer)
         )
         .sort((a, b) => {
-          // First sort by presence status (hadir first)
-          if (a.status === "hadir" && b.status !== "hadir") return -1;
-          if (a.status !== "hadir" && b.status === "hadir") return 1;
+          // First sort by presence status (present first)
+          const aIsPresent = isLecturerPresent(a);
+          const bIsPresent = isLecturerPresent(b);
+          if (aIsPresent && !bIsPresent) return -1;
+          if (!aIsPresent && bIsPresent) return 1;
 
           // Then sort by teaching schedule (today's schedule first)
           const aHasSchedule = hasTeachingScheduleToday(a);
@@ -165,6 +175,27 @@ export default function HomePage() {
       off(presenceRef);
     };
   }, [formattedDateISO]);
+
+  // Helper to get status text and badge color
+  const getLecturerStatusInfo = (lecturer: Lecturer) => {
+    // If the lecturer has checked in or checked out, they're present
+    if (lecturer.status === "masuk") {
+      return { 
+        text: "Hadir", 
+        color: "bg-green-100 text-green-800 hover:bg-green-200"
+      };
+    } else if (lecturer.status === "pulang") {
+      return { 
+        text: "Hadir (Telah Pulang)", 
+        color: "bg-blue-100 text-blue-800 hover:bg-blue-200"
+      };
+    } else {
+      return { 
+        text: "Tidak Hadir", 
+        color: "bg-gray-100 text-gray-800 hover:bg-gray-200"
+      };
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -280,12 +311,14 @@ export default function HomePage() {
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {filteredLecturers.map((lecturer) => {
                   const isScheduledToday = hasTeachingScheduleToday(lecturer);
+                  const statusInfo = getLecturerStatusInfo(lecturer);
+                  const isPresent = isLecturerPresent(lecturer);
 
                   return (
                     <Card
                       key={lecturer.id}
                       className={`${
-                        lecturer.status === "hadir" ? "border-green-500" : ""
+                        isPresent ? "border-green-500" : ""
                       }`}
                     >
                       <CardHeader className="pb-2">
@@ -293,10 +326,8 @@ export default function HomePage() {
                           <CardTitle className="truncate">
                             {lecturer.name}
                           </CardTitle>
-                          <Badge>
-                            {lecturer.status === "hadir"
-                              ? "Hadir"
-                              : "Tidak Hadir"}
+                          <Badge className={statusInfo.color}>
+                            {statusInfo.text}
                           </Badge>
                         </div>
                       </CardHeader>
@@ -311,13 +342,26 @@ export default function HomePage() {
                             </Badge>
                           )}
                         </div>
-                        {lecturer.status === "hadir" &&
-                          lecturer.lastUpdated && (
-                            <p className="text-xs mt-2">
-                              Terakhir update:{" "}
-                              {formatTime(lecturer.lastUpdated)}
+                        {isPresent && lecturer.lastUpdated && (
+                          <div className="mt-2 space-y-1">
+                            <p className="text-xs text-muted-foreground flex items-center">
+                              <Clock className="h-3 w-3 mr-1" />
+                              Terakhir update: {formatTime(lecturer.lastUpdated)}
                             </p>
-                          )}
+                            {lecturer.status === "masuk" && (
+                              <p className="text-xs text-green-600 flex items-center">
+                                <LogIn className="h-3 w-3 mr-1" />
+                                Check-in: {formatTime(lecturer.lastUpdated)}
+                              </p>
+                            )}
+                            {lecturer.status === "pulang" && (
+                              <p className="text-xs text-blue-600 flex items-center">
+                                <LogOut className="h-3 w-3 mr-1" />
+                                Check-out: {formatTime(lecturer.lastUpdated)}
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   );
@@ -368,13 +412,21 @@ export default function HomePage() {
                     ? hasTeachingScheduleToday(lecturer)
                     : false;
 
+                  // Get icon based on status
+                  const StatusIcon = presence.status === "masuk" ? LogIn : 
+                                    presence.status === "pulang" ? LogOut : User;
+
                   return (
                     <div
-                      key={presence.lecturerId}
+                      key={presence.lecturerId + "-" + (presence.time || Math.random())}
                       className="flex justify-between items-center border-b pb-3"
                     >
                       <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
+                        <StatusIcon className={`h-4 w-4 ${
+                          presence.status === "masuk" ? "text-green-500" :
+                          presence.status === "pulang" ? "text-blue-500" : 
+                          "text-muted-foreground"
+                        }`} />
                         <div>
                           <p className="font-medium">{presence.name}</p>
                           <div className="flex items-center gap-1">
@@ -394,11 +446,28 @@ export default function HomePage() {
                                 Di luar jadwal
                               </Badge>
                             )}
+                            <Badge 
+                              variant="outline" 
+                              className={`text-xs ${
+                                presence.status === "masuk" ? "bg-green-50 text-green-800" :
+                                presence.status === "pulang" ? "bg-blue-50 text-blue-800" : ""
+                              }`}
+                            >
+                              {presence.status === "masuk" ? "Check-in" : 
+                               presence.status === "pulang" ? "Check-out" : "Hadir"}
+                            </Badge>
                           </div>
                         </div>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {formatTime(presence.time)}
+                        {presence.checkInTime && presence.status === "pulang" ? (
+                          <div className="text-right">
+                            <div className="text-xs text-green-600">In: {presence.checkInTime}</div>
+                            <div className="text-xs text-blue-600">Out: {presence.checkOutTime || formatTime(presence.time)}</div>
+                          </div>
+                        ) : (
+                          formatTime(presence.time)
+                        )}
                       </div>
                     </div>
                   );

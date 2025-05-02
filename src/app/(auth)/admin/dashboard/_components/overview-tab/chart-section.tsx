@@ -17,7 +17,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import { UseDashboardPage } from "../../use-dashboard-page";
+import { useDashboardPage } from "../../use-dashboard-page";
 
 interface ChartSectionProps {
   weeklyData: any[];
@@ -34,7 +34,7 @@ export function ChartSection({
   todayFormatted,
   pieChartData,
 }: ChartSectionProps) {
-  const { COLORS } = UseDashboardPage();
+  const { COLORS } = useDashboardPage();
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

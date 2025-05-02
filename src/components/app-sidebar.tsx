@@ -66,6 +66,11 @@ const data = {
       url: "/admin/attendances",
       icon: IconChartBar,
     },
+    {
+      title: "Settings",
+      url: "/admin/settings",
+      icon: IconChartBar,
+    },
   ],
   // navClouds: [
   //   {
