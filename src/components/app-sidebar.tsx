@@ -47,13 +47,23 @@ const data = {
       icon: IconDashboard,
     },
     {
-      title: "Lecture",
-      url: "/admin/lecturer",
+      title: "Admin Management",
+      url: "/admin/admins",
       icon: IconListDetails,
     },
     {
-      title: "Presence",
-      url: "/admin/attendance",
+      title: "Lecture Management",
+      url: "/admin/lecturers",
+      icon: IconListDetails,
+    },
+    {
+      title: "RFID Management",
+      url: "/admin/rfids",
+      icon: IconChartBar,
+    },
+    {
+      title: "Presence Management",
+      url: "/admin/attendances",
       icon: IconChartBar,
     },
   ],
