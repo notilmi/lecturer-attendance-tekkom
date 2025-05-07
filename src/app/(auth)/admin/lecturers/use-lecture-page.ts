@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Lecturer, lecturerSchema } from "@/lib/schema/lecturer";
 import { z } from "zod";
 import { database } from "@/lib/firebase";
-import { get, ref, remove } from "firebase/database";
+import { get, onValue, ref, remove, off } from "firebase/database";
 import { toast } from "sonner";
 
 export function UseLecturePage() {
@@ -16,10 +16,10 @@ export function UseLecturePage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
+    const lecturersRef = ref(database, "lecturers");
     const fetchLecturers = async () => {
       try {
         setIsLoading(true);
-        const lecturersRef = ref(database, "lecturers");
         const snapshot = await get(lecturersRef);
 
         if (snapshot.exists()) {
@@ -46,16 +46,46 @@ export function UseLecturePage() {
       }
     };
 
-    fetchLecturers();
-  }, [toast]);
+    onValue(lecturersRef, fetchLecturers, (error) => {
+      console.error("Error fetching lecturers:", error);
+      toast("Error", {
+        description: "Gagal memuat data dosen.",
+      });
+      setIsLoading(false);
+    });
 
-  const filteredLecturers = lecturers.filter(
-    (lecturer) =>
-      lecturer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lecturer.lecturerCode.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    return () => {
+      off(lecturersRef)
+    }
+  }, []);
 
-  const handleDeleteLecturer = async () => {
+  const filteredLecturers = 
+    lecturers.filter(
+      (lecturer) =>
+        lecturer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lecturer.lecturerCode.toLowerCase().includes(searchQuery.toLowerCase())
+  ) 
+
+  
+
+  const updateLectureList = useCallback((lecturer: Lecturer) => {
+    setLecturers((prev) => {
+      const index = prev.findIndex((l) => l.id === lecturer.id);
+      if (index >= 0) {
+        // Update existing lecturer
+        const updated = [...prev];
+        updated[index] = lecturer;
+        return updated;
+      }
+      // Add new lecturer
+      const newList = [...prev, lecturer];
+      // Sort by name
+      newList.sort((a, b) => a.name.localeCompare(b.name));
+      return newList;
+    })
+  }, [])
+
+  const handleDeleteLecturer = useCallback(async () => {
     if (!selectedLecturer) return;
 
     setIsDeleting(true);
@@ -79,7 +109,7 @@ export function UseLecturePage() {
     } finally {
       setIsDeleting(false);
     }
-  };
+  }, [selectedLecturer]);
 
   return {
     lecturers,
@@ -99,6 +129,7 @@ export function UseLecturePage() {
     isDeleting, 
     setIsDeleting,
     filteredLecturers,
-    handleDeleteLecturer
+    handleDeleteLecturer,
+    updateLectureList
   }
 }
