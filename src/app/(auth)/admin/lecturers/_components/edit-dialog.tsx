@@ -13,12 +13,14 @@ export function EditDialog({
     showEditDialog,
     setShowEditDialog,
     selectedLecturer,
-    setSelectedLecturer
+    setSelectedLecturer,
+    updateLecturerList
 }: {
     showEditDialog: boolean,
     setShowEditDialog: (value: boolean) => void,
     selectedLecturer: Lecturer | null,
-    setSelectedLecturer: (value: Lecturer | null) => void 
+    setSelectedLecturer: (value: Lecturer | null) => void
+    updateLecturerList: (lecturer: Lecturer) => void
 }) {
     return (
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
@@ -34,8 +36,8 @@ export function EditDialog({
                 setShowEditDialog(false);
                 setSelectedLecturer(null);
                 // Refresh the list after editing
-                window.location.reload();
               }}
+              updateLecturerList={updateLecturerList}
             />
           )}
         </DialogContent>

@@ -53,7 +53,11 @@ export default function HomePage() {
   // Determine if a lecturer is present (either checked in or stayed)
   const isLecturerPresent = (lecturer: Lecturer) => {
     // If status is 'masuk' (checked in) OR 'pulang' (checked out), consider them present
-    return lecturer.status === "masuk" || lecturer.status === "pulang" || lecturer.status === "hadir";
+    return (
+      lecturer.status === "masuk" ||
+      lecturer.status === "pulang" ||
+      lecturer.status === "hadir"
+    );
   };
 
   // Filter lecturers based on teaching schedule and presence
@@ -123,6 +127,11 @@ export default function HomePage() {
         teachingDays: data[key].teachingDays || [],
       }));
 
+      console.log("Lecturers data structure:", data);
+      const sampleLecturer =
+        Object.keys(data).length > 0 ? data[Object.keys(data)[0]] : null;
+      console.log("Sample lecturer:", sampleLecturer);
+
       setLecturers(formattedData);
       setIsLoadingLecturers(false);
     };
@@ -180,19 +189,19 @@ export default function HomePage() {
   const getLecturerStatusInfo = (lecturer: Lecturer) => {
     // If the lecturer has checked in or checked out, they're present
     if (lecturer.status === "masuk") {
-      return { 
-        text: "Hadir", 
-        color: "bg-green-100 text-green-800 hover:bg-green-200"
+      return {
+        text: "Hadir",
+        color: "bg-green-100 text-green-800 hover:bg-green-200",
       };
     } else if (lecturer.status === "pulang") {
-      return { 
-        text: "Hadir (Telah Pulang)", 
-        color: "bg-blue-100 text-blue-800 hover:bg-blue-200"
+      return {
+        text: "Hadir (Telah Pulang)",
+        color: "bg-blue-100 text-blue-800 hover:bg-blue-200",
       };
     } else {
-      return { 
-        text: "Tidak Hadir", 
-        color: "bg-gray-100 text-gray-800 hover:bg-gray-200"
+      return {
+        text: "Tidak Hadir",
+        color: "bg-gray-100 text-gray-800 hover:bg-gray-200",
       };
     }
   };
@@ -317,9 +326,7 @@ export default function HomePage() {
                   return (
                     <Card
                       key={lecturer.id}
-                      className={`${
-                        isPresent ? "border-green-500" : ""
-                      }`}
+                      className={`${isPresent ? "border-green-500" : ""}`}
                     >
                       <CardHeader className="pb-2">
                         <div className="flex justify-between items-center">
@@ -346,7 +353,8 @@ export default function HomePage() {
                           <div className="mt-2 space-y-1">
                             <p className="text-xs text-muted-foreground flex items-center">
                               <Clock className="h-3 w-3 mr-1" />
-                              Terakhir update: {formatTime(lecturer.lastUpdated)}
+                              Terakhir update:{" "}
+                              {formatTime(lecturer.lastUpdated)}
                             </p>
                             {lecturer.status === "masuk" && (
                               <p className="text-xs text-green-600 flex items-center">
@@ -413,20 +421,32 @@ export default function HomePage() {
                     : false;
 
                   // Get icon based on status
-                  const StatusIcon = presence.status === "masuk" ? LogIn : 
-                                    presence.status === "pulang" ? LogOut : User;
+                  const StatusIcon =
+                    presence.status === "masuk"
+                      ? LogIn
+                      : presence.status === "pulang"
+                      ? LogOut
+                      : User;
 
                   return (
                     <div
-                      key={presence.lecturerId + "-" + (presence.time || Math.random())}
+                      key={
+                        presence.lecturerId +
+                        "-" +
+                        (presence.time || Math.random())
+                      }
                       className="flex justify-between items-center border-b pb-3"
                     >
                       <div className="flex items-center gap-2">
-                        <StatusIcon className={`h-4 w-4 ${
-                          presence.status === "masuk" ? "text-green-500" :
-                          presence.status === "pulang" ? "text-blue-500" : 
-                          "text-muted-foreground"
-                        }`} />
+                        <StatusIcon
+                          className={`h-4 w-4 ${
+                            presence.status === "masuk"
+                              ? "text-green-500"
+                              : presence.status === "pulang"
+                              ? "text-blue-500"
+                              : "text-muted-foreground"
+                          }`}
+                        />
                         <div>
                           <p className="font-medium">{presence.name}</p>
                           <div className="flex items-center gap-1">
@@ -446,24 +466,37 @@ export default function HomePage() {
                                 Di luar jadwal
                               </Badge>
                             )}
-                            <Badge 
-                              variant="outline" 
+                            <Badge
+                              variant="outline"
                               className={`text-xs ${
-                                presence.status === "masuk" ? "bg-green-50 text-green-800" :
-                                presence.status === "pulang" ? "bg-blue-50 text-blue-800" : ""
+                                presence.status === "masuk"
+                                  ? "bg-green-50 text-green-800"
+                                  : presence.status === "pulang"
+                                  ? "bg-blue-50 text-blue-800"
+                                  : ""
                               }`}
                             >
-                              {presence.status === "masuk" ? "Check-in" : 
-                               presence.status === "pulang" ? "Check-out" : "Hadir"}
+                              {presence.status === "masuk"
+                                ? "Check-in"
+                                : presence.status === "pulang"
+                                ? "Check-out"
+                                : "Hadir"}
                             </Badge>
                           </div>
                         </div>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {presence.checkInTime && presence.status === "pulang" ? (
+                        {presence.checkInTime &&
+                        presence.status === "pulang" ? (
                           <div className="text-right">
-                            <div className="text-xs text-green-600">In: {presence.checkInTime}</div>
-                            <div className="text-xs text-blue-600">Out: {presence.checkOutTime || formatTime(presence.time)}</div>
+                            <div className="text-xs text-green-600">
+                              In: {presence.checkInTime}
+                            </div>
+                            <div className="text-xs text-blue-600">
+                              Out:{" "}
+                              {presence.checkOutTime ||
+                                formatTime(presence.time)}
+                            </div>
                           </div>
                         ) : (
                           formatTime(presence.time)
