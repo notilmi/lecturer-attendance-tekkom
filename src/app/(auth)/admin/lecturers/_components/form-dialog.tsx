@@ -28,20 +28,14 @@ interface LecturerFormProps {
 
 export function LecturerForm({ initialData, onSuccess, updateLecturerList }: LecturerFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Form fields
   const [name, setName] = useState(initialData?.name || "");
   const [lecturerCode, setLecturerCode] = useState(
     initialData?.lecturerCode || ""
   );
   const [rfidUid, setRfidUid] = useState(initialData?.rfidUid || "");
-
-  // Jadwal mengajar - hari
   const [teachingDays, setTeachingDays] = useState<string[]>(
     initialData?.teachingDays || []
   );
-
-  // RFID data
   const [rfidUids, setRfidUids] = useState<{ uid: string; value: string }[]>(
     []
   );

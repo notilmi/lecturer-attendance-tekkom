@@ -44,117 +44,36 @@ const data = {
     {
       title: "Dashboard",
       url: "/admin/dashboard",
-      icon: IconDashboard,
+      icon: IconDashboard, // Tetap karena sudah cocok
     },
     {
       title: "Admin Management",
       url: "/admin/admins",
-      icon: IconListDetails,
+      icon: IconUsers, // Mengganti IconListDetails menjadi IconUsers
     },
     {
       title: "Lecture Management",
       url: "/admin/lecturers",
-      icon: IconListDetails,
+      icon: IconReport, // Lebih cocok untuk manajemen dosen
     },
     {
       title: "RFID Management",
       url: "/admin/rfids",
-      icon: IconChartBar,
+      icon: IconDatabase, // Mengganti IconChartBar menjadi IconDatabase
     },
     {
       title: "Presence Management",
       url: "/admin/attendances",
-      icon: IconChartBar,
+      icon: IconFileDescription, // Lebih cocok menggambarkan absensi atau laporan kehadiran
     },
-    {
-      title: "Settings",
-      url: "/admin/settings",
-      icon: IconChartBar,
-    },
+    // {
+    //   title: "Settings",
+    //   url: "/admin/settings",
+    //   icon: IconSettings, // Mengganti IconChartBar menjadi IconSettings
+    // },
   ],
-  // navClouds: [
-  //   {
-  //     title: "Capture",
-  //     icon: IconCamera,
-  //     isActive: true,
-  //     url: "#",
-  //     items: [
-  //       {
-  //         title: "Active Proposals",
-  //         url: "#",
-  //       },
-  //       {
-  //         title: "Archived",
-  //         url: "#",
-  //       },
-  //     ],
-  //   },
-  //   {
-  //     title: "Proposal",
-  //     icon: IconFileDescription,
-  //     url: "#",
-  //     items: [
-  //       {
-  //         title: "Active Proposals",
-  //         url: "#",
-  //       },
-  //       {
-  //         title: "Archived",
-  //         url: "#",
-  //       },
-  //     ],
-  //   },
-  //   {
-  //     title: "Prompts",
-  //     icon: IconFileAi,
-  //     url: "#",
-  //     items: [
-  //       {
-  //         title: "Active Proposals",
-  //         url: "#",
-  //       },
-  //       {
-  //         title: "Archived",
-  //         url: "#",
-  //       },
-  //     ],
-  //   },
-  // ],
-  // navSecondary: [
-  //   {
-  //     title: "Settings",
-  //     url: "#",
-  //     icon: IconSettings,
-  //   },
-  //   {
-  //     title: "Get Help",
-  //     url: "#",
-  //     icon: IconHelp,
-  //   },
-  //   {
-  //     title: "Search",
-  //     url: "#",
-  //     icon: IconSearch,
-  //   },
-  // ],
-  // documents: [
-  //   {
-  //     name: "Data Library",
-  //     url: "#",
-  //     icon: IconDatabase,
-  //   },
-  //   {
-  //     name: "Reports",
-  //     url: "#",
-  //     icon: IconReport,
-  //   },
-  //   {
-  //     name: "Word Assistant",
-  //     url: "#",
-  //     icon: IconFileWord,
-  //   },
-  // ],
 }
+
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 

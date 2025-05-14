@@ -10,6 +10,7 @@ import {
   Bar,
   PieChart,
   Pie,
+  Cell,
   ResponsiveContainer,
   XAxis,
   YAxis,
@@ -19,14 +20,22 @@ import {
 } from "recharts";
 import { useDashboardPage } from "../../use-dashboard-page";
 
+// Define types for props
+interface ChartData {
+  day: string;
+  present: number;
+  absent: number;
+}
+
+interface PieChartData {
+  label: string;
+  value: number;
+}
+
 interface ChartSectionProps {
-  weeklyData: any[];
+  weeklyData: ChartData[];
   todayFormatted: string;
-  pieChartData: 
-    {
-      label: string;
-      value: number;
-    }[];
+  pieChartData: PieChartData[];
 }
 
 export function ChartSection({
@@ -51,12 +60,17 @@ export function ChartSection({
                 top: 5,
                 right: 30,
                 left: 20,
-                bottom: 25,
+                bottom: 50, // Increased to accommodate rotated labels
               }}
             >
               <CartesianGrid strokeDasharray="3 3" />
-              {/* <XAxis dataKey="day" tick={{ angle: -45 }} textAnchor="end" height={50} />
-                <YAxis /> */}
+              <XAxis
+                dataKey="day"
+                angle={-45} // Rotate labels directly
+                textAnchor="end"
+                height={50}
+              />
+              <YAxis />
               <Tooltip />
               <Legend />
               <Bar dataKey="present" fill="#4ade80" name="Hadir" />
@@ -83,15 +97,14 @@ export function ChartSection({
                   `${name}: ${(percent * 100).toFixed(0)}%`
                 }
                 outerRadius={80}
-                fill="#8884d8"
                 dataKey="value"
               >
-                {Array.isArray(pieChartData) &&
-                  pieChartData.map((item, index) => (
-                    <div key={index}>
-                      {item.label}: {item.value}
-                    </div>
-                  ))}
+                {pieChartData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
               </Pie>
               <Tooltip />
               <Legend />
