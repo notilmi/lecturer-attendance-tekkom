@@ -1,7 +1,7 @@
 {
     "crons": [
         {
-            "path": "/api/reset-status",
+            "path": "https://lecturer-attendance-tekkom-bia1-git-v2-baloerrrs-projects.vercel.app/api/reset-status",
             "schedule": "0 5 * * *"
         }
     ]
