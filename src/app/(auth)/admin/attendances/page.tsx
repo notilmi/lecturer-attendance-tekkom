@@ -3,7 +3,7 @@
 import React from "react";
 import { Tabs } from "@/components/ui/tabs";
 import { Header } from "../_components/header";
-import { UseAttendancePage } from "./use-attendance-page";
+import { useAttendancePage } from "./use-attendance-page";
 import { TabList } from "./_components/tab-list";
 import { DailyReportTab } from "./_components/daily-report-tab";
 import { SummaryTab } from "./_components/summary-tab";
@@ -12,7 +12,7 @@ export default function AttendanceReportPage() {
   const {
     activeTab,
     setActiveTab,
-  } = UseAttendancePage();
+  } = useAttendancePage();
 
   return (
     <div className="p-4">
@@ -24,13 +24,13 @@ export default function AttendanceReportPage() {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <TabList />
+        {/* <TabList /> */}
 
         {/* Daily Report Tab */}
         <DailyReportTab />
 
         {/* Summary Tab */}
-        <SummaryTab />
+        {/* <SummaryTab /> */}
       </Tabs>
     </div>
   );

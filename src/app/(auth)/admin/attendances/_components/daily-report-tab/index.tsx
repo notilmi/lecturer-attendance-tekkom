@@ -21,7 +21,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate } from "../../utils";
-import { UseAttendancePage } from "../../use-attendance-page";
+import { useAttendancePage } from "../../use-attendance-page";
 import HeaderTable from "../header-table";
 import { DataTable } from "./data-table";
 
@@ -37,7 +37,7 @@ export function DailyReportTab() {
     exportToCSV,
     setSearchQuery,
     isLoadingData,
-  } = UseAttendancePage();
+  } = useAttendancePage();
 
   return (
     <TabsContent value="daily" className="space-y-6">

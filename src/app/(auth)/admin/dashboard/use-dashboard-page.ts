@@ -1,20 +1,18 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { getAuth, signOut } from 'firebase/auth';
 import { ref, onValue, off, get } from 'firebase/database';
 import { database } from '@/lib/firebase';
+import { Lecturer } from '@/lib/schema/lecturer';
+import { LecturePresence } from '@/lib/schema/lecture-presence';
 
-export function UseDashboardPage() {
-    const router = useRouter();
+export function useDashboardPage() {
     const [activeTab, setActiveTab] = useState('overview');
 
     // Data states
-    const [lecturers, setLecturers] = useState<any[]>([]);
-    const [todayPresence, setTodayPresence] = useState<any[]>([]);
+    const [lecturers, setLecturers] = useState<Lecturer[]>([]);
+    const [todayPresence, setTodayPresence] = useState<LecturePresence[]>([]);
     const [weeklyData, setWeeklyData] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [pieChartData, setPieChartData] = useState<{ label: string; value: number }[]>([]);
-
 
     // Format date to YYYY-MM-DD
     const getFormattedDate = (date: Date): string => {
@@ -55,10 +53,21 @@ export function UseDashboardPage() {
         return date.toLocaleDateString('id-ID', { weekday: 'long' });
     };
 
+    // Get current day name
+    const currentDay = today.toLocaleDateString('id-ID', { weekday: 'long' });
+
+    // Check if lecturer has teaching schedule today
+    const isScheduledToday = (lecturer: Lecturer): boolean => {
+        return lecturer.teachingDays?.includes(currentDay) || false;
+    };
+
+    // Check if lecturer is present (has checked in or already checked out)
+    const isLecturerPresent = (lecturer: Lecturer): boolean => {
+        return lecturer.status === 'masuk' || lecturer.status === 'pulang' || lecturer.status === 'hadir';
+    };
 
     // Fetch data from Firebase
     useEffect(() => {
-
         // Fetch lecturers
         const lecturersRef = ref(database, 'lecturers');
         setIsLoading(true);
@@ -72,7 +81,9 @@ export function UseDashboardPage() {
             const data = snapshot.val();
             const formattedData = Object.keys(data).map(key => ({
                 id: key,
-                ...data[key]
+                ...data[key],
+                // Ensure teachingDays exists
+                teachingDays: data[key].teachingDays || []
             }));
 
             setLecturers(formattedData);
@@ -93,12 +104,12 @@ export function UseDashboardPage() {
 
             const data = snapshot.val();
             const formattedData = Object.keys(data).map(key => ({
-                id: key,
+                lecturerId: key,
                 ...data[key]
             }));
 
             // Sort by time (most recent first)
-            formattedData.sort((a, b) => b.time - a.time);
+            formattedData.sort((a, b) => b.lastUpdated - a.lastUpdated);
 
             setTodayPresence(formattedData);
             setIsLoading(false);
@@ -117,7 +128,24 @@ export function UseDashboardPage() {
                     const datePresenceRef = ref(database, `lecturer_presence/${dateStr}`);
                     const snapshot = await get(datePresenceRef);
 
-                    const presentCount = snapshot.exists() ? Object.keys(snapshot.val()).length : 0;
+                    let presentCount = 0;
+                    
+                    if (snapshot.exists()) {
+                        const presenceData = snapshot.val();
+                        // Count unique lecturers who were present (checked in or out)
+                        const uniqueLecturerIds = new Set();
+                        
+                        Object.keys(presenceData).forEach(key => {
+                            const presenceStatus = presenceData[key].status;
+                            // If lecturer has any status of masuk, pulang, or hadir, they are counted as present
+                            if (presenceStatus === 'masuk' || presenceStatus === 'pulang' || presenceStatus === 'hadir') {
+                                uniqueLecturerIds.add(key);
+                            }
+                        });
+                        
+                        presentCount = uniqueLecturerIds.size;
+                    }
+                    
                     const absentCount = lecturers.length - presentCount;
 
                     weekData.push({
@@ -148,21 +176,59 @@ export function UseDashboardPage() {
 
     // Calculate statistics
     const totalLecturers = lecturers.length;
-    const presentToday = lecturers.filter(l => l.status === 'hadir').length;
+    
+    // Count lecturers who are present (checked in or checked out)
+    const presentToday = useMemo(() => {
+        return lecturers.filter(l => isLecturerPresent(l)).length;
+    }, [lecturers]);
+    
     const presentPercentage = totalLecturers > 0 ? Math.round((presentToday / totalLecturers) * 100) : 0;
 
-    // Calculate average arrival time
+    // Update pie chart data based on current presence
+    useEffect(() => {
+        const present = presentToday;
+        const absent = totalLecturers - present;
+        
+        setPieChartData([
+            { label: 'Hadir', value: present },
+            { label: 'Tidak Hadir', value: absent }
+        ]);
+    }, [presentToday, totalLecturers]);
+
+    // Calculate average arrival time - using check-in time when available
     const calculateAvgArrivalTime = () => {
         if (todayPresence.length === 0) return "00:00";
 
         let totalMinutes = 0;
+        let count = 0;
 
         todayPresence.forEach(p => {
-            const date = new Date(p.time);
-            totalMinutes += date.getHours() * 60 + date.getMinutes();
+            // Use checkInTime if available, otherwise use the general timestamp
+            let timeToUse;
+        
+            if (p.checkInTime) {
+                // Parse HH:MM format
+                const [hours, minutes] = p.checkInTime.split(':').map(Number);
+                timeToUse = hours * 60 + minutes;
+            } else {
+                // Legacy format - use time property
+                const timeSource = p.time ?? p.lastUpdated;
+        
+                if (timeSource !== undefined) {
+                    const date = new Date(timeSource);
+                    timeToUse = date.getHours() * 60 + date.getMinutes();
+                } else {
+                    // Default fallback, misalnya 0 menit
+                    timeToUse = 0;
+                }
+            }
+        
+            totalMinutes += timeToUse;
+            count++;
         });
+        
 
-        const avgMinutes = Math.round(totalMinutes / todayPresence.length);
+        const avgMinutes = Math.round(totalMinutes / count);
         const hours = Math.floor(avgMinutes / 60);
         const minutes = avgMinutes % 60;
 
@@ -170,14 +236,6 @@ export function UseDashboardPage() {
     };
 
     const avgArrivalTime = calculateAvgArrivalTime();
-
-    // Chart data
-    useEffect(() => {
-        setPieChartData([
-            { label: 'Hadir', value: 10 },
-            { label: 'Tidak Hadir', value: 5 }
-          ]);
-    }, [])
 
     // Determine most active day
     const getMostActiveDay = () => {
@@ -198,7 +256,7 @@ export function UseDashboardPage() {
 
     const mostActiveDay = getMostActiveDay();
 
-    // Generate arrival time distribution
+    // Generate arrival time distribution - use check-in times when available
     const generateArrivalDistribution = () => {
         const distribution = [
             { time: '07:00-08:00', count: 0 },
@@ -209,15 +267,28 @@ export function UseDashboardPage() {
         ];
 
         todayPresence.forEach(p => {
-            const date = new Date(p.time);
-            const hour = date.getHours();
-
-            if (hour >= 7 && hour < 12) {
+            let hour: number | undefined;
+        
+            if (p.checkInTime) {
+                // Parse check-in time (HH:MM format)
+                hour = parseInt(p.checkInTime.split(':')[0], 10);
+            } else {
+                // Legacy format - use time or lastUpdated
+                const timeSource = p.time ?? p.lastUpdated;
+        
+                if (timeSource !== undefined) {
+                    const date = new Date(timeSource);
+                    hour = date.getHours();
+                }
+            }
+        
+            // Only proceed if hour is defined and in the desired range
+            if (typeof hour === 'number' && hour >= 7 && hour < 12) {
                 const index = hour - 7;
                 distribution[index].count++;
             }
         });
-
+        
         return distribution;
     };
 
@@ -225,6 +296,23 @@ export function UseDashboardPage() {
 
     // Colors for pie chart
     const COLORS = ['#0088FE', '#FFBB28'];
+
+    // Get statistics for check-in/check-out
+    const getCheckInOutStats = () => {
+        const totalPresent = presentToday;
+        const checkedIn = lecturers.filter(l => l.status === 'masuk').length;
+        const checkedOut = lecturers.filter(l => l.status === 'pulang').length;
+        const legacyPresent = lecturers.filter(l => l.status === 'hadir').length;
+        
+        return {
+            totalPresent,
+            checkedIn,
+            checkedOut,
+            legacyPresent
+        };
+    };
+
+    const checkInOutStats = getCheckInOutStats();
 
     return {
         COLORS,
@@ -246,6 +334,10 @@ export function UseDashboardPage() {
         todayPresence,
         setTodayPresence,
         pieChartData,
-        todayFormatted
-    }
+        todayFormatted,
+        checkInOutStats,
+        isLecturerPresent,
+        isScheduledToday,
+        currentDay
+    };
 }

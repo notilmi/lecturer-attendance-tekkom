@@ -10,11 +10,11 @@ import {
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UseAttendancePage } from "../../use-attendance-page";
+import { useAttendancePage } from "../../use-attendance-page";
 
 export function SummaryAttendance() {
   const { selectedDate, attendanceData, summary, isLoadingData } =
-    UseAttendancePage();
+    useAttendancePage();
 
   return !selectedDate || attendanceData.length === 0 ? (
     <Alert>

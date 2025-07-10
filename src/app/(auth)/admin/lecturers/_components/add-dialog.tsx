@@ -4,16 +4,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { LecturerForm } from "./form-dialog";
+import { Lecturer } from "@/lib/schema/lecturer";
 
 export function AddDialog({
   showAddDialog,
   setShowAddDialog,
+  updateLecturerList
 }: {
   showAddDialog: boolean;
   setShowAddDialog: (value: boolean) => void;
+  updateLecturerList: (lecturer: Lecturer) => void
 }) {
   return (
     <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
@@ -27,9 +29,8 @@ export function AddDialog({
         <LecturerForm
           onSuccess={() => {
             setShowAddDialog(false);
-            // Refresh the list after adding
-            window.location.reload();
           }}
+          updateLecturerList={updateLecturerList}
         />
       </DialogContent>
     </Dialog>

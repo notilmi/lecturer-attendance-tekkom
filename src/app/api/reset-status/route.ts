@@ -15,7 +15,7 @@ export async function GET(): Promise<NextResponse> {
     const lecturers = snapshot.val() as Record<string, { status?: string }>;
 
     Object.keys(lecturers).forEach((lecturerId) => {
-      updates[`/lecturers/${lecturerId}/status`] = 'tidak hadir';
+      updates[`/lecturers/${lecturerId}/status`] = 'Belum hadir';
     });
 
     await update(ref(database), updates);

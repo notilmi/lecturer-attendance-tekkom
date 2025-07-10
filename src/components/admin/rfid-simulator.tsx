@@ -9,6 +9,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ref, get, set, update } from 'firebase/database';
 import { database } from '@/lib/firebase';
 import { AlertCircle, Clock, Zap } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 
 // Format tanggal YYYY-MM-DD
 function getFormattedDate() {
@@ -19,6 +21,15 @@ function getFormattedDate() {
   return `${year}-${month}-${day}`;
 }
 
+// Format waktu HH:MM:SS
+function getFormattedTime() {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `${hours}:${minutes}:${seconds}`;
+}
+
 export function RfidSimulator() {
   const [uid, setUid] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -26,16 +37,35 @@ export function RfidSimulator() {
     message: '',
     status: null
   });
-  const [availableRfids, setAvailableRfids] = useState<{uid: string, lecturer?: string}[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   
-  // Load registered RFID UIDs
+  // Define interfaces for our data structures
+  interface PresenceData {
+    uid: string;
+    tanggal: string;
+    status: 'masuk' | 'pulang';
+    lastUpdated: number;
+    checkInTime?: string;
+    checkOutTime?: string;
+  }
+  
+  interface LecturerPresenceData {
+    name: string;
+    lecturerCode: string;
+    status: 'masuk' | 'pulang';
+    lastUpdated: number;
+    checkInTime?: string;
+    checkOutTime?: string;
+  }
+  const [availableRfids, setAvailableRfids] = useState<{uid: string, lecturer?: string, status?: string}[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [scanMode, setScanMode] = useState<'masuk' | 'pulang'>('masuk');
+  
+  // Load registered RFID UIDs and their current status
   useEffect(() => {
     const fetchRfidData = async () => {
       setIsLoading(true);
       
       try {
-        
         // Get RFID registry
         const rfidRef = ref(database, 'rfid_register');
         const rfidSnapshot = await get(rfidRef);
@@ -47,11 +77,11 @@ export function RfidSimulator() {
         }
         
         const rfidData = rfidSnapshot.val();
-        const rfids: {uid: string, lecturer?: string}[] = Object.keys(rfidData).map(key => ({
+        const rfids: {uid: string, lecturer?: string, status?: string}[] = Object.keys(rfidData).map(key => ({
           uid: key
         }));
         
-        // Get lecturers to match RFID with names
+        // Get lecturers to match RFID with names and current status
         const lecturersRef = ref(database, 'lecturers');
         const lecturersSnapshot = await get(lecturersRef);
         
@@ -62,6 +92,7 @@ export function RfidSimulator() {
             for (const key in lecturersData) {
               if (lecturersData[key].rfidUid === rfid.uid) {
                 rfid.lecturer = lecturersData[key].name;
+                rfid.status = lecturersData[key].status || 'tidak hadir';
                 break;
               }
             }
@@ -77,20 +108,30 @@ export function RfidSimulator() {
     };
     
     fetchRfidData();
-  }, []);
+  }, [result]); // Refresh when result changes to update statuses
   
-  // Check if already present today
-  const checkExistingPresence = async (uid: string) => {
+  // Check if already present today and get current status
+  const checkPresenceStatus = async (uid: string) => {
     try {
       const date = getFormattedDate();
       
       const presenceRef = ref(database, `presence/${date}/${uid}`);
       const snapshot = await get(presenceRef);
       
-      return snapshot.exists();
+      if (!snapshot.exists()) {
+        return { exists: false, currentStatus: null };
+      }
+      
+      const data = snapshot.val();
+      return { 
+        exists: true, 
+        currentStatus: data.status || 'masuk',
+        checkInTime: data.checkInTime,
+        checkOutTime: data.checkOutTime
+      };
     } catch (error) {
       console.error('Error checking presence:', error);
-      return false;
+      return { exists: false, currentStatus: null };
     }
   };
   
@@ -111,6 +152,8 @@ export function RfidSimulator() {
     
     try {
       const date = getFormattedDate();
+      const currentTime = getFormattedTime();
+      const timestamp = Date.now();
       
       // Cek apakah RFID terdaftar
       const rfidRef = ref(database, `rfid_register/${uid}`);
@@ -125,24 +168,66 @@ export function RfidSimulator() {
         return;
       }
       
-      // Cek apakah sudah presensi hari ini
-      const alreadyPresent = await checkExistingPresence(uid);
+      // Cek status presensi saat ini
+      const { exists, currentStatus, checkInTime, checkOutTime } = await checkPresenceStatus(uid);
       
-      if (alreadyPresent) {
-        setResult({
-          message: `UID ${uid} sudah melakukan presensi hari ini`,
-          status: 'info'
-        });
-        setIsSubmitting(false);
-        return;
+      // Logika untuk check-in dan check-out
+      if (scanMode === 'masuk') {
+        if (exists && currentStatus === 'masuk') {
+          setResult({
+            message: `UID ${uid} sudah melakukan check-in hari ini`,
+            status: 'info'
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        
+        if (exists && currentStatus === 'pulang') {
+          setResult({
+            message: `UID ${uid} sudah melakukan check-out hari ini dan tidak dapat check-in lagi`,
+            status: 'error'
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      } else if (scanMode === 'pulang') {
+        if (!exists || currentStatus !== 'masuk') {
+          setResult({
+            message: `UID ${uid} belum melakukan check-in hari ini, tidak dapat check-out`,
+            status: 'error'
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        
+        if (exists && currentStatus === 'pulang') {
+          setResult({
+            message: `UID ${uid} sudah melakukan check-out hari ini`,
+            status: 'info'
+          });
+          setIsSubmitting(false);
+          return;
+        }
       }
       
       // Catat kehadiran
       const presenceRef = ref(database, `presence/${date}/${uid}`);
-      await set(presenceRef, {
+      
+      const presenceData: PresenceData = {
         uid: uid,
-        tanggal: date
-      });
+        tanggal: date,
+        status: scanMode,
+        lastUpdated: timestamp
+      };
+      
+      if (scanMode === 'masuk') {
+        presenceData.checkInTime = currentTime;
+      } else if (exists && currentStatus === 'masuk') {
+        presenceData.checkInTime = checkInTime;
+        presenceData.checkOutTime = currentTime;
+      }
+      
+      await set(presenceRef, presenceData);
       
       // Cari dosen dengan UID yang cocok
       const lecturersRef = ref(database, 'lecturers');
@@ -165,35 +250,55 @@ export function RfidSimulator() {
         
         if (lecturerId) {
           // Update lecturer status
-          const updateTime = Date.now();
           const lecturerRef = ref(database, `lecturers/${lecturerId}`);
           await update(lecturerRef, {
-            status: 'hadir',
-            lastUpdated: updateTime
+            status: scanMode,
+            lastUpdated: timestamp
           });
           
           // Record in lecturer_presence
           const presenceHistoryRef = ref(database, `lecturer_presence/${date}/${lecturerId}`);
-          await set(presenceHistoryRef, {
+          
+          const presenceHistoryData: LecturerPresenceData = {
             name: lecturerName,
             lecturerCode: lecturers[lecturerId].lecturerCode,
-            time: updateTime,
-            status: 'hadir'
-          });
+            status: scanMode,
+            lastUpdated: timestamp
+          };
           
+          if (scanMode === 'masuk') {
+            presenceHistoryData.checkInTime = currentTime;
+          } else if (exists) {
+            // Get existing check-in time if available
+            const existingPresenceRef = ref(database, `lecturer_presence/${date}/${lecturerId}`);
+            const existingPresenceSnapshot = await get(existingPresenceRef);
+            
+            if (existingPresenceSnapshot.exists()) {
+              const existingData = existingPresenceSnapshot.val();
+              if (existingData.checkInTime) {
+                presenceHistoryData.checkInTime = existingData.checkInTime;
+              }
+            }
+            
+            presenceHistoryData.checkOutTime = currentTime;
+          }
+          
+          await set(presenceHistoryRef, presenceHistoryData);
+          
+          const action = scanMode === 'masuk' ? 'Check-in' : 'Check-out';
           setResult({
-            message: `Presensi berhasil: ${lecturerName}`,
+            message: `${action} berhasil: ${lecturerName} (${currentTime})`,
             status: 'success'
           });
         } else {
           setResult({
-            message: `Kehadiran tercatat, tetapi UID tidak terkait dengan dosen manapun`,
+            message: `Presensi tercatat, tetapi UID tidak terkait dengan dosen manapun`,
             status: 'info'
           });
         }
       } else {
         setResult({
-          message: `Kehadiran tercatat, tetapi tidak ada data dosen`,
+          message: `Presensi tercatat, tetapi tidak ada data dosen`,
           status: 'info'
         });
       }
@@ -219,11 +324,30 @@ export function RfidSimulator() {
           Simulator RFID
         </CardTitle>
         <CardDescription>
-          Simulasikan scanning kartu RFID untuk testing
+          Simulasikan scanning kartu RFID untuk check-in dan check-out
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Mode Select - Check-in or Check-out */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Mode Scan</label>
+            <RadioGroup 
+              value={scanMode} 
+              onValueChange={(value) => setScanMode(value as 'masuk' | 'pulang')}
+              className="flex gap-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="masuk" id="masuk" />
+                <Label htmlFor="masuk" className="cursor-pointer">Check-in (Datang)</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="pulang" id="pulang" />
+                <Label htmlFor="pulang" className="cursor-pointer">Check-out (Pulang)</Label>
+              </div>
+            </RadioGroup>
+          </div>
+          
           <div className="space-y-2">
             <label htmlFor="uid" className="text-sm font-medium">
               UID RFID
@@ -238,7 +362,7 @@ export function RfidSimulator() {
                 list="rfid-options"
               />
               <Button type="submit" disabled={isSubmitting || !uid.trim()}>
-                {isSubmitting ? 'Memproses...' : 'Scan'}
+                {isSubmitting ? 'Memproses...' : scanMode === 'masuk' ? 'Check-in' : 'Check-out'}
               </Button>
             </div>
             
@@ -256,10 +380,7 @@ export function RfidSimulator() {
           </div>
           
           {result.status && (
-            <Alert >
-                {/* variant={result.status === 'error' ? 'destructive' : 
-                           result.status === 'success' ? 'default' : 
-                           'secondary'} */}
+            <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{result.message}</AlertDescription>
             </Alert>
@@ -275,13 +396,26 @@ export function RfidSimulator() {
                   availableRfids.map(rfid => (
                     <div 
                       key={rfid.uid} 
-                      className="p-2 border rounded-md flex justify-between cursor-pointer hover:bg-muted"
+                      className="p-2 border rounded-md flex items-center justify-between cursor-pointer hover:bg-muted"
                       onClick={() => setUid(rfid.uid)}
                     >
-                      <span>{rfid.uid}</span>
-                      {rfid.lecturer && (
-                        <span className="text-muted-foreground">{rfid.lecturer}</span>
-                      )}
+                      <span className="font-medium">{rfid.uid}</span>
+                      <div className="flex flex-col items-end">
+                        {rfid.lecturer && (
+                          <span className="text-muted-foreground">{rfid.lecturer}</span>
+                        )}
+                        {rfid.status && (
+                          <span className={`text-xs ${
+                            rfid.status === 'masuk' ? 'text-green-500' : 
+                            rfid.status === 'pulang' ? 'text-blue-500' : 
+                            'text-muted-foreground'
+                          }`}>
+                            {rfid.status === 'masuk' ? '✓ Check-in' : 
+                             rfid.status === 'pulang' ? '✓ Check-out' : 
+                             'Tidak hadir'}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   ))
                 )}
@@ -291,7 +425,7 @@ export function RfidSimulator() {
           
           <div className="text-xs text-muted-foreground mt-4 flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            <span>Tanggal simulasi: {getFormattedDate()}</span>
+            <span>Tanggal simulasi: {getFormattedDate()} - Waktu: {getFormattedTime()}</span>
           </div>
         </form>
       </CardContent>

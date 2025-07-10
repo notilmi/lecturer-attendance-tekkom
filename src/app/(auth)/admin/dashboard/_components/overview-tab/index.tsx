@@ -1,6 +1,6 @@
 import { TabsContent } from "@/components/ui/tabs";
 import { QuickStatsCard } from "./quick-stats-card";
-import { UseDashboardPage } from "../../use-dashboard-page";
+import { useDashboardPage } from "../../use-dashboard-page";
 import { ChartSection } from "./chart-section";
 import { RecentAttendance } from "./recent-attendance";
 
@@ -15,7 +15,7 @@ export function OverviewTab() {
     todayFormatted,
     weeklyData,
     todayPresence,
-  } = UseDashboardPage();
+  } = useDashboardPage();
 
   return (
     <TabsContent value="overview" className="space-y-6">

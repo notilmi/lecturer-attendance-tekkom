@@ -1,8 +1,6 @@
-"use client";
-
-import { database } from "@/lib/firebase";
-import { get, onValue, ref } from "firebase/database";
-import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -11,107 +9,118 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Pencil, Search, Trash2 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Search, Plus, Pencil, Trash2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatDaysList } from "../utils/format-dat-list";
+import { Lecturer } from "@/lib/schema/lecturer";
+import { Admin } from "@/lib/schema/admin";
 
-interface Admin {
-  id: string;
-  email: string;
-  createdAt: string;
-}
+export function AdminTable({
+    searchQuery,
+    setSearchQuery,
+    isLoading, 
+    filteredAdmins,
+    setSelectedAdmin,
+    setShowDeleteDialog,
+    setShowEditDialog
+}: {
+    searchQuery: string,
+    setSearchQuery: (value: string) => void,
+    isLoading: boolean, 
+    filteredAdmins: Admin[],
+    setSelectedAdmin: (value: Admin) => void,
+    setShowDeleteDialog: (value: boolean) => void,
+    setShowEditDialog: (value: boolean) => void
+}) {
+    return (
+        <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Daftar Admin</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2 mb-4">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Cari admin..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="max-w-md"
+            />
+          </div>
 
-export function AdminTable() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [admins, setAdmins] = useState<Admin[]>([]);
-  const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
-  const [addAdminOpen, setAddAdminOpen] = useState(false);
-
-  useEffect(() => {
-    const adminsRef = ref(database, "admins");
-    const unsubscribe = onValue(adminsRef, (snapshot) => {
-      const data = snapshot.val();
-      const adminsList: Admin[] = [];
-
-      for (const id in data) {
-        adminsList.push({
-          id,
-          email: data[id].email,
-          createdAt: new Date(data[id].createdAt).toLocaleDateString(),
-        });
-      }
-
-      setAdmins(adminsList);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const filteredTags = admins.filter(
-    (tag) =>
-      tag.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tag.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Daftar Admin</CardTitle>
-        <CardDescription>
-          Kelola Admin yang terdaftar dalam sistem
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-2 mb-4">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Cari Admin..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="max-w-md"
-          />
-        </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Email</TableHead>
-              <TableHead>Tanggal Dibuat</TableHead>
-              <TableHead>Aksi</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {admins.map((admin) => (
-              <TableRow key={admin.id}>
-                <TableCell>{admin.email}</TableCell>
-                <TableCell>{admin.createdAt}</TableCell>
-                <TableCell className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setEditingAdmin(admin)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    // onClick={() => handleDelete(admin.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
-  );
+          {isLoading ? (
+            <div className="space-y-2">
+              {[...Array(5)].map((_, i) => (
+                <div
+                  key={i}
+                  className="flex justify-between items-center p-4 border rounded-md"
+                >
+                  <Skeleton className="h-5 w-40" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-8 w-8 rounded-md" />
+                    <Skeleton className="h-8 w-8 rounded-md" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredAdmins.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">
+                {searchQuery
+                  ? `Tidak ada hasil untuk "${searchQuery}"`
+                  : "Belum ada data dosen"}
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-md border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAdmins.map((admin) => (
+                    <TableRow key={admin.id}>
+                      <TableCell className="font-medium">
+                        {admin.email}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          {/* <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedAdmin(admin);
+                              setShowEditDialog(true);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button> */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500"
+                            onClick={() => {
+                              setSelectedAdmin(admin);
+                              setShowDeleteDialog(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Hapus
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    )
 }

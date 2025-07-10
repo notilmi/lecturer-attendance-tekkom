@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { UseDashboardPage } from "../../use-dashboard-page";
+import { useDashboardPage } from "../../use-dashboard-page";
 
 interface RecentAttendance {
     todayPresence: any[]
@@ -8,7 +8,7 @@ interface RecentAttendance {
 
 export function RecentAttendance({ todayPresence }: RecentAttendance) {
 
-    const { formatTime } = UseDashboardPage();
+    const { formatTime } = useDashboardPage();
 
   return (
     <Card>
@@ -27,8 +27,8 @@ export function RecentAttendance({ todayPresence }: RecentAttendance) {
           </div>
         ) : (
           <div className="space-y-8">
-            {todayPresence.slice(0, 5).map((item) => (
-              <div className="flex items-center" key={item.id}>
+            {todayPresence.slice(0, 5).map((item, key) => (
+              <div className="flex items-center" key={key}>
                 <div className="space-y-1">
                   <p className="text-sm font-medium leading-none">
                     {item.name}

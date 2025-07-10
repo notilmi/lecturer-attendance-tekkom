@@ -23,24 +23,19 @@ import { Lecturer } from "@/lib/schema/lecturer";
 interface LecturerFormProps {
   initialData?: Lecturer;
   onSuccess?: () => void;
+  updateLecturerList: (lecturer: Lecturer) => void;
 }
 
-export function LecturerForm({ initialData, onSuccess }: LecturerFormProps) {
+export function LecturerForm({ initialData, onSuccess, updateLecturerList }: LecturerFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Form fields
   const [name, setName] = useState(initialData?.name || "");
   const [lecturerCode, setLecturerCode] = useState(
     initialData?.lecturerCode || ""
   );
   const [rfidUid, setRfidUid] = useState(initialData?.rfidUid || "");
-
-  // Jadwal mengajar - hari
   const [teachingDays, setTeachingDays] = useState<string[]>(
     initialData?.teachingDays || []
   );
-
-  // RFID data
   const [rfidUids, setRfidUids] = useState<{ uid: string; value: string }[]>(
     []
   );
@@ -203,11 +198,13 @@ export function LecturerForm({ initialData, onSuccess }: LecturerFormProps) {
         // Update existing lecturer
         const lecturerRef = ref(database, `lecturers/${initialData.id}`);
         await update(lecturerRef, lecturerData);
+        updateLecturerList({ ...lecturerData, id: initialData.id});
       } else {
         // Add new lecturer
         const lecturersRef = ref(database, "lecturers");
         const newLecturerRef = push(lecturersRef);
         await set(newLecturerRef, lecturerData);
+        updateLecturerList({ ...lecturerData, id: newLecturerRef.key || ""});
 
         // Reset form after successful submission
         setName("");

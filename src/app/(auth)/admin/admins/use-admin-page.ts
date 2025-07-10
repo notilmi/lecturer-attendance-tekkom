@@ -1,40 +1,40 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Lecturer, lecturerSchema } from "@/lib/schema/lecturer";
+import { lecturerSchema } from "@/lib/schema/lecturer";
 import { z } from "zod";
 import { database } from "@/lib/firebase";
 import { get, onValue, ref, remove, off } from "firebase/database";
 import { toast } from "sonner";
+import { Admin } from "@/lib/schema/admin";
 
-export function UseLecturePage() {
-  const [lecturers, setLecturers] = useState<Lecturer[]>([]);
+export function UseAdminPage() {
+  const [admins, setAdmins] = useState<Admin[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedLecturer, setSelectedLecturer] = useState<Lecturer | null>(null);
+  const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    const lecturersRef = ref(database, "lecturers");
-    const fetchLecturers = async () => {
+    const adminsRef = ref(database, "admins");
+    const fetchAdmins = async () => {
       try {
         setIsLoading(true);
-        const snapshot = await get(lecturersRef);
+        const snapshot = await get(adminsRef);
 
         if (snapshot.exists()) {
           const data = snapshot.val();
           const formattedData = Object.keys(data).map((key) => ({
             id: key,
             ...data[key],
-            teachingDays: data[key].teachingDays || [],
           }));
 
           // Sort by name
-          formattedData.sort((a, b) => a.name.localeCompare(b.name));
-          setLecturers(formattedData);
+          formattedData.sort((a, b) => a.email.localeCompare(b.email));
+          setAdmins(formattedData);
         } else {
-          setLecturers([]);
+          setAdmins([]);
         }
       } catch (error) {
         console.error("Error fetching lecturers:", error);
@@ -46,7 +46,7 @@ export function UseLecturePage() {
       }
     };
 
-    onValue(lecturersRef, fetchLecturers, (error) => {
+    onValue(adminsRef, fetchAdmins, (error) => {
       console.error("Error fetching lecturers:", error);
       toast("Error", {
         description: "Gagal memuat data dosen.",
@@ -55,52 +55,48 @@ export function UseLecturePage() {
     });
 
     return () => {
-      off(lecturersRef)
+      off(adminsRef)
     }
   }, []);
 
   const filteredLecturers = 
-    lecturers.filter(
-      (lecturer) =>
-        lecturer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        lecturer.lecturerCode.toLowerCase().includes(searchQuery.toLowerCase())
-  ) 
+    admins.filter((admin) => admin.email.toLowerCase().includes(searchQuery.toLowerCase()))
 
   
 
-  const updateLectureList = useCallback((lecturer: Lecturer) => {
-    setLecturers((prev) => {
-      const index = prev.findIndex((l) => l.id === lecturer.id);
+  const updateAdminList = useCallback((admin: Admin) => {
+    setAdmins((prev) => {
+      const index = prev.findIndex((l) => l.id === admin.id);
       if (index >= 0) {
-        // Update existing lecturer
+        // Update existing admin
         const updated = [...prev];
-        updated[index] = lecturer;
+        updated[index] = admin;
         return updated;
       }
       // Add new lecturer
-      const newList = [...prev, lecturer];
+      const newList = [...prev, admin];
       // Sort by name
-      newList.sort((a, b) => a.name.localeCompare(b.name));
+      newList.sort((a, b) => a.email.localeCompare(b.email));
       return newList;
     })
   }, [])
 
-  const handleDeleteLecturer = useCallback(async () => {
-    if (!selectedLecturer) return;
+  const handleDeleteAdmin = useCallback(async () => {
+    if (!selectedAdmin) return;
 
     setIsDeleting(true);
     try {
-      const lecturerRef = ref(database, `lecturers/${selectedLecturer.id}`);
+      const adminRef = ref(database, `admins/${selectedAdmin.id}`);
 
-      await remove(lecturerRef);
+      await remove(adminRef);
 
       toast("Berhasil", {
-        description: `Data dosen ${selectedLecturer.name} berhasil dihapus.`,
+        description: `Data admin ${selectedAdmin.email} berhasil dihapus.`,
       });
 
-      setLecturers((prev) => prev.filter((l) => l.id !== selectedLecturer.id));
+      setAdmins((prev) => prev.filter((l) => l.id !== selectedAdmin.id));
       setShowDeleteDialog(false);
-      setSelectedLecturer(null);
+      setSelectedAdmin(null);
     } catch (error: any) {
       console.error("Error deleting lecturer:", error);
       toast("Error", {
@@ -109,17 +105,17 @@ export function UseLecturePage() {
     } finally {
       setIsDeleting(false);
     }
-  }, [selectedLecturer]);
+  }, [selectedAdmin]);
 
   return {
-    lecturers,
-    setLecturers,
+    admins,
+    setAdmins,
     searchQuery,
     setSearchQuery,
     isLoading, 
     setIsLoading,
-    selectedLecturer, 
-    setSelectedLecturer,
+    selectedAdmin, 
+    setSelectedAdmin,
     showDeleteDialog, 
     setShowDeleteDialog,
     showEditDialog, 
@@ -129,7 +125,7 @@ export function UseLecturePage() {
     isDeleting, 
     setIsDeleting,
     filteredLecturers,
-    handleDeleteLecturer,
-    updateLectureList
+    handleDeleteAdmin,
+    updateAdminList
   }
 }

@@ -10,12 +10,12 @@ import {
 } from "@/components/ui/card";
 import { TabsContent } from "@/components/ui/tabs";
 import { formatDate } from "../../utils";
-import { UseAttendancePage } from "../../use-attendance-page";
+import { useAttendancePage } from "../../use-attendance-page";
 import { TimeDistributionAttendance } from "./time-distribution-attendance";
 
 export function SummaryTab() {
   const { selectedDate } =
-    UseAttendancePage();
+    useAttendancePage();
 
   return (
     <TabsContent value="summary">

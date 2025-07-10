@@ -24,7 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { formatTime } from "../../utils";
-import { UseAttendancePage } from "../../use-attendance-page";
+import { useAttendancePage } from "../../use-attendance-page";
 
 export function DataTable() {
   const {
@@ -32,7 +32,7 @@ export function DataTable() {
     handleDeleteRecord,
     isDeleting,
     setSelectedRecord,
-  } = UseAttendancePage();
+  } = useAttendancePage();
 
   return (
     <div className="rounded-md border overflow-hidden">

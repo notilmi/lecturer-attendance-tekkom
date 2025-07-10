@@ -18,7 +18,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import { UseDashboardPage } from "../../use-dashboard-page";
+import { useDashboardPage } from "../../use-dashboard-page";
 import { LecturesArrivalGraphic } from "./lectures-arrival-graphic";
 import { LecturesPresenceStats } from "./lectures-presence-stats";
 
@@ -29,7 +29,7 @@ export function AttendanceTab() {
     formatTime,
     todayPresence,
     lecturers,
-  } = UseDashboardPage();
+  } = useDashboardPage();
 
   return (
     <TabsContent value="attendance" className="space-y-6">

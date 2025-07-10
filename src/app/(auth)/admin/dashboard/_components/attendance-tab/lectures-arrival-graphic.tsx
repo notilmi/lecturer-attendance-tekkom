@@ -47,10 +47,10 @@ export function LecturesArrivalGraphic({ arrivalDistribution }: LecturesArrivalG
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="time" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
+              <XAxis dataKey="time" angle={-45} textAnchor="end" height={50} />
+              <YAxis />
+              <Tooltip />
+              <Legend />
                 <Bar dataKey="count" fill="#3b82f6" name="Jumlah Dosen" />
               </BarChart>
             </ResponsiveContainer>

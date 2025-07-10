@@ -25,6 +25,7 @@ export default function LecturersPage() {
     isDeleting,
     filteredLecturers,
     handleDeleteLecturer,
+    updateLectureList
   } = UseLecturePage();
 
   return (
@@ -51,6 +52,7 @@ export default function LecturersPage() {
       <AddDialog
         showAddDialog={showAddDialog}
         setShowAddDialog={setShowAddDialog}
+        updateLecturerList={updateLectureList}
       />
 
       <EditDialog
@@ -58,6 +60,7 @@ export default function LecturersPage() {
         setShowEditDialog={setShowEditDialog}
         selectedLecturer={selectedLecturer}
         setSelectedLecturer={setSelectedLecturer}
+        updateLecturerList={updateLectureList}
       />
 
       <DeleteDialog
