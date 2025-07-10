@@ -1,4 +1,3 @@
-// app/(public)/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -200,7 +199,7 @@ export default function HomePage() {
       };
     } else {
       return {
-        text: "Tidak Hadir",
+        text: "Belum Hadir",
         color: "bg-gray-100 text-gray-800 hover:bg-gray-200",
       };
     }
@@ -250,11 +249,11 @@ export default function HomePage() {
               <CalendarIcon className="h-4 w-4 mr-1" />
               <span>{formattedDate}</span>
             </div>
-            <Link href="/history" passHref>
+            {/* <Link href="/history" passHref>
               <Button variant="link" size="sm" className="font-medium">
                 Lihat Riwayat
               </Button>
-            </Link>
+            </Link> */}
           </div>
         </div>
 
