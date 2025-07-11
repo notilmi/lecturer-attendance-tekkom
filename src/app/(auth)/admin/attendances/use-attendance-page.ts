@@ -9,6 +9,7 @@ export function useAttendancePage() {
     const [dates, setDates] = useState<string[]>([]);
     const [selectedDate, setSelectedDate] = useState<string>("");
     const [attendanceData, setAttendanceData] = useState<LecturePresence[]>([]);
+    const [lecturers, setLecturers] = useState<any>({});
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState("daily");
     const [isLoadingDates, setIsLoadingDates] = useState(true);
@@ -61,6 +62,24 @@ export function useAttendancePage() {
         fetchDates();
     }, [selectedDate]);
 
+    // Fetch lecturers data once
+    useEffect(() => {
+        const fetchLecturers = async () => {
+            try {
+                const lecturersRef = ref(database, "lecturers");
+                const snapshot = await get(lecturersRef);
+                if (snapshot.exists()) {
+                    setLecturers(snapshot.val());
+                } else {
+                    setLecturers({});
+                }
+            } catch (error) {
+                setLecturers({});
+            }
+        };
+        fetchLecturers();
+    }, []);
+
     // Fetch attendance data for selected date
     useEffect(() => {
         if (!selectedDate) return;
@@ -76,14 +95,24 @@ export function useAttendancePage() {
 
                 if (snapshot.exists()) {
                     const data = snapshot.val();
-                    const formattedData = Object.keys(data).map((key) => ({
-                        lecturerId: key,
-                        ...data[key],
-                        // Ensure optional fields exist
-                        checkInTime: data[key].checkInTime || null,
-                        checkOutTime: data[key].checkOutTime || null,
-                        isScheduled: data[key].isScheduled || false
-                    }));
+                    const formattedData = Object.keys(data).map((key) => {
+                        const record = data[key];
+                        // Cari nama dosen dari lecturers jika field name kosong
+                        let name = record.name;
+                        if (!name) {
+                            // Cari berdasarkan lecturerCode
+                            const lecturer = Object.values(lecturers).find((l: any) => l.lecturerCode === record.lecturerCode);
+                            name = lecturer ? lecturer.name : "";
+                        }
+                        return {
+                            lecturerId: key,
+                            ...record,
+                            name,
+                            checkInTime: record.checkInTime || null,
+                            checkOutTime: record.checkOutTime || null,
+                            isScheduled: record.isScheduled || false
+                        };
+                    });
 
                     // Sort by lastUpdated or time (most recent first)
                     formattedData.sort((a, b) => (b.lastUpdated || b.time || 0) - (a.lastUpdated || a.time || 0));
@@ -93,16 +122,12 @@ export function useAttendancePage() {
                     // Calculate summary
                     const summaryData = {
                         total: formattedData.length,
-                        // Count records with status masuk, pulang, or hadir as present
                         present: formattedData.filter(record => isLecturerPresent(record)).length,
-                        // Count by specific status
                         checkedIn: formattedData.filter(record => record.status === "masuk").length,
                         checkedOut: formattedData.filter(record => record.status === "pulang").length,
-                        // Count by schedule
                         scheduled: formattedData.filter(record => record.isScheduled).length,
                         unscheduled: formattedData.filter(record => !record.isScheduled).length,
                     };
-
                     setSummary(summaryData);
                 } else {
                     setAttendanceData([]);
@@ -121,9 +146,8 @@ export function useAttendancePage() {
                 setIsLoadingData(false);
             }
         };
-
         fetchAttendanceData();
-    }, [selectedDate]);
+    }, [selectedDate, lecturers]);
 
     // Filter attendance data by search query
     const filteredAttendance = attendanceData.filter(
