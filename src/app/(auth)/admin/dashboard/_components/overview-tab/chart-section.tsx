@@ -80,7 +80,7 @@ export function ChartSection({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="col-span-2 md:col-span-1 lg:col-span-1">
         <CardHeader>
           <CardTitle>Status Kehadiran Hari Ini</CardTitle>
           <CardDescription>{todayFormatted}</CardDescription>
