@@ -83,8 +83,7 @@ export default function LoginForm() {
               Login Admin
             </CardTitle>
             <CardDescription className="text-center">
-              Masukkan email dan password untuk masuk ke panel admin sistem
-              absensi dosen
+              Masukkan email dan password untuk masuk ke panel admin aplikasi informasi kehadiran dosen.
             </CardDescription>
           </CardHeader>
 
