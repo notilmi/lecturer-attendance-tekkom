@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/auth-context";
 import { Toaster } from "sonner";
 import { QueryProvider } from "./query-provider";
+import InstallButton from "@/components/install-button";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,6 +40,7 @@ export default function RootLayout({
           <AuthProvider>
             {children}
             <Toaster />
+            <InstallButton />
           </AuthProvider>
         </QueryProvider>
       </body>
