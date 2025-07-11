@@ -12,15 +12,7 @@ export function Header({ title }: { title: string }) {
           day: "numeric",
         })}
       </div>
-      <Button
-        onClick={async () => {
-          const res = await fetch("/api/reset-status");
-          const data = await res.json();
-          alert(`Reset status: ${data.message}`);
-        }}
-      >
-        Trigger Reset Status
-      </Button>
+      
     </div>
   );
 }
