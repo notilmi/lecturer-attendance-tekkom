@@ -107,10 +107,6 @@ export function NavUser({
                   Account
                 </Link>
               </DropdownMenuItem>
-              {/* <DropdownMenuItem>
-                <IconCreditCard />
-                Setting
-              </DropdownMenuItem> */}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
