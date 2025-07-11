@@ -36,22 +36,22 @@ const data = {
       icon: IconDashboard, // Tetap karena sudah cocok
     },
     {
-      title: "Admin Management",
+      title: "Kelola Admin",
       url: "/admin/admins",
       icon: IconUsers, // Mengganti IconListDetails menjadi IconUsers
     },
     {
-      title: "Lecture Management",
+      title: "Kelola Dosen",
       url: "/admin/lecturers",
       icon: IconReport, // Lebih cocok untuk manajemen dosen
     },
     {
-      title: "RFID Management",
+      title: "Kelola RFID",
       url: "/admin/rfids",
       icon: IconDatabase, // Mengganti IconChartBar menjadi IconDatabase
     },
     {
-      title: "Presence Management",
+      title: "Kelola Kehadiran",
       url: "/admin/attendances",
       icon: IconFileDescription, // Lebih cocok menggambarkan absensi atau laporan kehadiran
     },
