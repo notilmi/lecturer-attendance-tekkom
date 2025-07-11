@@ -36,7 +36,7 @@ export function OverviewTab() {
       />
 
       {/* Recent Attendance */}
-      <RecentAttendance todayPresence={todayPresence} />
+      {/* <RecentAttendance todayPresence={todayPresence} /> */}
     </TabsContent>
   );
 }
