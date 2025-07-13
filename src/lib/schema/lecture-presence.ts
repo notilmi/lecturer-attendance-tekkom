@@ -10,7 +10,8 @@ export const lecturePresenceSchema = z.object({
     isScheduled: z.boolean().optional(),
     lastUpdated: z.number().optional(),
     checkInTime: z.string().optional(),
-    checkOutTime: z.string().optional()
+    checkOutTime: z.string().optional(),
+    rfidUid: z.string().optional(), 
 });
 
 export type LecturePresence = z.infer<typeof lecturePresenceSchema>;
