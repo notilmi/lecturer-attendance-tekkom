@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { Button } from "@/components/ui/button";
+import { LecturePresence } from "@/lib/schema/lecture-presence";
+import { formatTime } from "../../utils";
 import {
   Table,
   TableBody,
@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Loader2, Trash2 } from "lucide-react";
 import {
   AlertDialog,
@@ -23,17 +24,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { formatTime } from "../../utils";
-import { useAttendancePage } from "../../use-attendance-page";
 
-export function DataTable() {
-  const {
-    filteredAttendance,
-    handleDeleteRecord,
-    isDeleting,
-    setSelectedRecord,
-  } = useAttendancePage();
+interface DataTableProps {
+  data: LecturePresence[];
+  isDeleting: boolean;
+  onDelete: (record: LecturePresence) => void;
+  getStatusDisplay: (status: string) => string;
+}
 
+export function DataTable({ data, isDeleting, onDelete, getStatusDisplay }: DataTableProps) {
   return (
     <div className="rounded-md border overflow-hidden">
       <Table>
@@ -48,16 +47,14 @@ export function DataTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredAttendance.map((record) => (
+          {data.map((record) => (
             <TableRow key={record.lecturerId}>
               <TableCell className="font-medium">{record.name}</TableCell>
               <TableCell>{record.lecturerCode}</TableCell>
               <TableCell>{formatTime(record.time)} WIB</TableCell>
               <TableCell>
-                <Badge
-                  variant={record.status === "hadir" ? "default" : "secondary"}
-                >
-                  {record.status === "hadir" ? "Hadir" : "Tidak Hadir"}
+                <Badge variant={record.status === "hadir" ? "default" : "secondary"}>
+                  {getStatusDisplay(record.status)}
                 </Badge>
               </TableCell>
               <TableCell>
@@ -74,7 +71,8 @@ export function DataTable() {
                       variant="ghost"
                       size="sm"
                       className="text-red-500"
-                      onClick={() => setSelectedRecord(record)}
+                      onClick={() => onDelete(record)}
+                      disabled={isDeleting}
                     >
                       <Trash2 className="h-4 w-4 mr-1" />
                       Hapus
@@ -84,18 +82,14 @@ export function DataTable() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Apakah Anda yakin ingin menghapus data kehadiran{" "}
-                        {record.name}? Tindakan ini tidak dapat dibatalkan.
+                        Apakah Anda yakin ingin menghapus data kehadiran {record.name}?
+                        Tindakan ini tidak dapat dibatalkan.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Batal</AlertDialogCancel>
                       <AlertDialogAction
-                        onClick={(e: React.FormEvent) => {
-                          e.preventDefault();
-                          setSelectedRecord(record);
-                          handleDeleteRecord();
-                        }}
+                        onClick={() => onDelete(record)}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         disabled={isDeleting}
                       >
