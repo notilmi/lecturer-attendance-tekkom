@@ -52,11 +52,10 @@ export default function HomePage() {
 
   // Determine if a lecturer is present (either checked in or stayed)
   const isLecturerPresent = (lecturer: Lecturer) => {
-    // If status is 'masuk' (checked in) OR 'pulang' (checked out), consider them present
     return (
       lecturer.status === "masuk" ||
       lecturer.status === "pulang" ||
-      lecturer.status === "hadir"
+      lecturer.status === "belum hadir"
     );
   };
 
@@ -495,7 +494,7 @@ export default function HomePage() {
                                 ? "Check-in"
                                 : presence.status === "pulang"
                                 ? "Check-out"
-                                : "Hadir"}
+                                : "Belum hadir"}
                             </Badge>
                           </div>
                         </div>
