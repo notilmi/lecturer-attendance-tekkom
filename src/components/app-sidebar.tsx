@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/contexts/auth-context"
 import Image from "next/image";
+import { usePathname } from "next/navigation";
+
 
 const data = {
   user: {
@@ -62,6 +64,8 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const { user } = useAuth();  
+  const pathname = usePathname();
+  const isActive = (url: string) => pathname === url;
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -85,7 +89,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={data.navMain} activePath={pathname}  />
         {/* <NavDocuments items={data.documents} />
         <NavSecondary items={data.navSecondary} className="mt-auto" /> */}
       </SidebarContent>
