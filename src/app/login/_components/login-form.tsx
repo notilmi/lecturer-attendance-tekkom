@@ -60,7 +60,8 @@ export default function LoginForm() {
       router.push("/admin/dashboard");
     } catch (error: any) {
       console.log(error);
-      setError(error.message);
+
+      setError("Password tidak cocok.");
       setTimeout(() => setError(null), 4000);
     } finally {
       setLoading(false);
@@ -83,7 +84,8 @@ export default function LoginForm() {
               Login Admin
             </CardTitle>
             <CardDescription className="text-center">
-              Masukkan email dan password untuk masuk ke panel admin aplikasi informasi kehadiran dosen.
+              Masukkan email dan password untuk masuk ke panel admin aplikasi
+              informasi kehadiran dosen.
             </CardDescription>
           </CardHeader>
 
