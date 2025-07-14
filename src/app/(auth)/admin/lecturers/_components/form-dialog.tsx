@@ -46,7 +46,9 @@ export function LecturerForm({
   const [isLoadingRfid, setIsLoadingRfid] = useState(true);
   const [rfidError, setRfidError] = useState<Error | null>(null);
   const [usedRfidUids, setUsedRfidUids] = useState<string[]>([]);
-const [status, setStatus] = useState<"masuk" | "pulang" | "tidak hadir" | "hadir" | "belum hadir">(initialData?.status || "tidak hadir");
+  const [status, setStatus] = useState<
+    "masuk" | "pulang" | "tidak hadir" | "hadir" | "belum hadir"
+  >(initialData?.status || "tidak hadir");
   // Form errors
   const [errors, setErrors] = useState({
     name: "",
@@ -330,26 +332,37 @@ const [status, setStatus] = useState<"masuk" | "pulang" | "tidak hadir" | "hadir
         )}
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="status">Status</Label>
-        <Select
-          value={status}
-          onValueChange={(value) => setStatus(value as "masuk" | "pulang" | "tidak hadir" | "hadir" | "belum hadir")}
-          disabled={isSubmitting}
-        >
-         <SelectTrigger>
+      {initialData && (
+        <div className="space-y-2">
+          <Label htmlFor="status">Status</Label>
+          <Select
+            value={status}
+            onValueChange={(value) =>
+              setStatus(
+                value as
+                  | "masuk"
+                  | "pulang"
+                  | "tidak hadir"
+                  | "hadir"
+                  | "belum hadir"
+              )
+            }
+            disabled={isSubmitting}
+          >
+            <SelectTrigger>
               <SelectValue placeholder="Pilih Status Dosen" />
             </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="masuk">Hadir</SelectItem>
-            <SelectItem value="pulang">Pulang</SelectItem>
-            <SelectItem value="belum hadir">Belum Hadir</SelectItem>
-          </SelectContent>
-        </Select>
-        {errors.status && (
-          <p className="text-sm text-destructive">{errors.status}</p>
-        )}
-      </div>
+            <SelectContent>
+              <SelectItem value="masuk">Hadir</SelectItem>
+              <SelectItem value="pulang">Pulang</SelectItem>
+              <SelectItem value="belum hadir">Belum Hadir</SelectItem>
+            </SelectContent>
+          </Select>
+          {errors.status && (
+            <p className="text-sm text-destructive">{errors.status}</p>
+          )}
+        </div>
+      )}
 
       <div className="space-y-2">
         <div>
