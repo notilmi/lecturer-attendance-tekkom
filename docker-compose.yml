@@ -73,12 +73,12 @@ services:
       - "traefik.http.routers.traefik-secure.tls.certresolver=cloudflare"
       # Uses Cloudflare as the certificate resolver to handle SSL certificate generation and management.
 
-      - "traefik.http.routers.traefik-secure.tls.domains[0].main=scicommons.org"
-      # Specifies the main domain for which the SSL certificate will be generated (scicommons.org).
+      - "traefik.http.routers.traefik-secure.tls.domains[0].main=lecturer-attendance-tekkom.cloud"
+      # Specifies the main domain for which the SSL certificate will be generated (lecturer-attendance-tekkom.cloud).
 
       - "traefik.http.routers.traefik-secure.service=api@internal"
       # Uses the internal Traefik API service to monitor and manage the router.
-  app:
+  lecturer-attendance-tekkom:
     platform: "linux/amd64"
     build:
       context: .
@@ -90,40 +90,38 @@ services:
       - "traefik.enable=true"
       # Enables Traefik for this container.
 
-      - "traefik.http.routers.scicommons.entrypoints=http"
-      # Defines the HTTP entry point for the scicommons router.
+      - "traefik.http.routers.lecturer-attendance-tekkom.entrypoints=http"
+      # Defines the HTTP entry point for the lecturer-attendance-tekkom router.
 
-      - "traefik.http.routers.scicommons.rule=Host(`scicommons.org`)"
-      # Defines the routing rule: only route traffic with the host `scicommons.org` to this container.
+      - "traefik.http.routers.lecturer-attendance-tekkom.rule=Host(`lecturer-attendance-tekkom.cloud`)"
+      # Defines the routing rule: only route traffic with the host `lecturer-attendance-tekkom.cloud` to this container.
 
-      - "traefik.http.middlewares.scicommons-https-redirect.redirectscheme.scheme=https"
-      # Redirects HTTP traffic to HTTPS for the SciCommons service.
+      - "traefik.http.middlewares.lecturer-attendance-tekkom-https-redirect.redirectscheme.scheme=https"
+      # Redirects HTTP traffic to HTTPS for the lecturer-attendance-tekkom service.
 
-      - "traefik.http.routers.scicommons.middlewares=scicommons-https-redirect"
-      # Applies the HTTPS redirection middleware to the SciCommons router.
+      - "traefik.http.routers.lecturer-attendance-tekkom.middlewares=lecturer-attendance-tekkom-https-redirect"
+      # Applies the HTTPS redirection middleware to the lecturer-attendance-tekkom router.
 
-      - "traefik.http.routers.scicommons-secure.entrypoints=https"
-      # Defines the HTTPS entry point for the SciCommons router.
+      - "traefik.http.routers.lecturer-attendance-tekkom-secure.entrypoints=https"
+      # Defines the HTTPS entry point for the lecturer-attendance-tekkom router.
 
-      - "traefik.http.routers.scicommons-secure.rule=Host(`scicommons.org`)"
-      # Defines the routing rule for secure HTTPS requests to `scicommons.org`.
+      - "traefik.http.routers.lecturer-attendance-tekkom-secure.rule=Host(`lecturer-attendance-tekkom.cloud`)"
+      # Defines the routing rule for secure HTTPS requests to `lecturer-attendance-tekkom.cloud`.
 
-      - "traefik.http.routers.scicommons-secure.tls=true"
-      # Enables TLS (HTTPS) for the secure SciCommons route.
+      - "traefik.http.routers.lecturer-attendance-tekkom-secure.tls=true"
+      # Enables TLS (HTTPS) for the secure lecturer-attendance-tekkom route.
 
-      - "traefik.http.routers.scicommons-secure.service=scicommons"
-      # Defines the service name as 'scicommons' for the secure router.
+      - "traefik.http.routers.lecturer-attendance-tekkom-secure.service=lecturer-attendance-tekkom"
+      # Defines the service name as 'lecturer-attendance-tekkom' for the secure router.
 
-      - "traefik.http.services.scicommons.loadbalancer.server.port=3000"
-      # Specifies the port (3000) where the SciCommons frontend service is running within the container.
+      - "traefik.http.services.lecturer-attendance-tekkom.loadbalancer.server.port=3000"
+      # Specifies the port (3000) where the lecturer-attendance-tekkom frontend service is running within the container.
 
       - "traefik.docker.network=proxy"
       # Specifies the Docker network 'proxy' for Traefik to route requests to this container.
     ports:
       - "3000:3000"
     image: t3-app
-    environment:
-      - DATABASE_URL=database_url_goes_here
     networks:
       - docker_network
 networks:
