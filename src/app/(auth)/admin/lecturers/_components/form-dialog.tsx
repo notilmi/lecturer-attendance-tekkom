@@ -49,6 +49,9 @@ export function LecturerForm({
   const [status, setStatus] = useState<
     "masuk" | "pulang" | "tidak hadir" | "hadir" | "belum hadir"
   >(initialData?.status || "tidak hadir");
+
+  
+
   // Form errors
   const [errors, setErrors] = useState({
     name: "",
@@ -188,54 +191,70 @@ export function LecturerForm({
 
   // Form submission
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
+  if (!validateForm()) {
+    return;
+  }
 
-    setIsSubmitting(true);
+  setIsSubmitting(true);
 
-    try {
-      // Prepare data
+  try {
+    // Data dasar untuk tambah/update
+    const baseLecturerData = {
+      name,
+      lecturerCode,
+      rfidUid,
+      teachingDays,
+      status: status || "belum hadir",
+      lastUpdated: Date.now(),
+    };
+
+    if (initialData?.id) {
+      // 🔁 Update dosen yang sudah ada
+      const lecturerRef = ref(database, `lecturers/${initialData.id}`);
+      await update(lecturerRef, baseLecturerData);
+
+      // ⬆️ Update list dosen lokal
+      updateLecturerList({
+        ...baseLecturerData,
+        id: initialData.id,
+      });
+    } else {
+      // ➕ Tambah dosen baru
       const lecturerData = {
-        name,
-        lecturerCode,
-        rfidUid,
-        teachingDays,
-        status: status || "belum hadir",
-        lastUpdated: Date.now(),
+        ...baseLecturerData,
+        time: Date.now(), // ⏱ simpan waktu penambahan baru
       };
 
-      if (initialData?.id) {
-        // Update existing lecturer
-        const lecturerRef = ref(database, `lecturers/${initialData.id}`);
-        await update(lecturerRef, lecturerData);
-        updateLecturerList({ ...lecturerData, id: initialData.id });
-      } else {
-        // Add new lecturer
-        const lecturersRef = ref(database, "lecturers");
-        const newLecturerRef = push(lecturersRef);
-        await set(newLecturerRef, lecturerData);
-        updateLecturerList({ ...lecturerData, id: newLecturerRef.key || "" });
+      const lecturersRef = ref(database, "lecturers");
+      const newLecturerRef = push(lecturersRef); // generate ID
+      await set(newLecturerRef, lecturerData);
 
-        // Reset form after successful submission
-        setName("");
-        setLecturerCode("");
-        setRfidUid("");
-        setTeachingDays([]);
-      }
-
-      if (onSuccess) onSuccess();
-    } catch (error: any) {
-      console.error("Form submission error:", error);
-      toast("Gagal", {
-        description: error.message || "Terjadi kesalahan saat menyimpan data",
+      // ⬆️ Simpan ke list dengan id dari key Firebase
+      updateLecturerList({
+        ...lecturerData,
+        id: newLecturerRef.key || "",
       });
-    } finally {
-      setIsSubmitting(false);
+
+      // 🔁 Reset form
+      setName("");
+      setLecturerCode("");
+      setRfidUid("");
+      setTeachingDays([]);
     }
-  };
+
+    if (onSuccess) onSuccess();
+  } catch (error: any) {
+    console.error("Form submission error:", error);
+    toast("Gagal", {
+      description: error.message || "Terjadi kesalahan saat menyimpan data",
+    });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   // Refresh RFID list
   const refreshRfidList = () => {
@@ -353,8 +372,6 @@ export function LecturerForm({
               <SelectValue placeholder="Pilih Status Dosen" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="masuk">Hadir</SelectItem>
-              <SelectItem value="pulang">Pulang</SelectItem>
               <SelectItem value="belum hadir">Belum Hadir</SelectItem>
             </SelectContent>
           </Select>
