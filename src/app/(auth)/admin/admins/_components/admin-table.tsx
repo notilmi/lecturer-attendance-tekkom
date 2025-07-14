@@ -9,11 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Pencil, Trash2 } from "lucide-react";
+import { Search, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatDaysList } from "../utils/format-dat-list";
-import { Lecturer } from "@/lib/schema/lecturer";
 import { Admin } from "@/lib/schema/admin";
 
 export function AdminTable({
@@ -23,7 +20,6 @@ export function AdminTable({
     filteredAdmins,
     setSelectedAdmin,
     setShowDeleteDialog,
-    setShowEditDialog
 }: {
     searchQuery: string,
     setSearchQuery: (value: string) => void,
@@ -69,7 +65,7 @@ export function AdminTable({
               <p className="text-muted-foreground">
                 {searchQuery
                   ? `Tidak ada hasil untuk "${searchQuery}"`
-                  : "Belum ada data dosen"}
+                  : "Belum ada data admin"}
               </p>
             </div>
           ) : (
