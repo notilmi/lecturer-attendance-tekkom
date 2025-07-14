@@ -45,7 +45,7 @@ services:
       - ./traefik/traefik.yml:/traefik.yml:ro
       # Mounts the `traefik.yml` file from the host machine into the container, which contains Traefik's configuration.
 
-      - /home/ubuntu/traefik/acme.json:/acme.json
+      - ./traefik/acme.json:/acme.json
       # Mounts the `acme.json` file (used for storing SSL certificates) into the container for certificate management.
 
     labels:
