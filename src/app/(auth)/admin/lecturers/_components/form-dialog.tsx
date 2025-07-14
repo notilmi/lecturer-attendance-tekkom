@@ -26,7 +26,11 @@ interface LecturerFormProps {
   updateLecturerList: (lecturer: Lecturer) => void;
 }
 
-export function LecturerForm({ initialData, onSuccess, updateLecturerList }: LecturerFormProps) {
+export function LecturerForm({
+  initialData,
+  onSuccess,
+  updateLecturerList,
+}: LecturerFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState(initialData?.name || "");
   const [lecturerCode, setLecturerCode] = useState(
@@ -42,12 +46,15 @@ export function LecturerForm({ initialData, onSuccess, updateLecturerList }: Lec
   const [isLoadingRfid, setIsLoadingRfid] = useState(true);
   const [rfidError, setRfidError] = useState<Error | null>(null);
   const [usedRfidUids, setUsedRfidUids] = useState<string[]>([]);
-
+  const [status, setStatus] = useState<
+    "masuk" | "pulang" | "tidak hadir" | "hadir" | "belum hadir"
+  >(initialData?.status || "tidak hadir");
   // Form errors
   const [errors, setErrors] = useState({
     name: "",
     lecturerCode: "",
     rfidUid: "",
+    status: "",
     teachingDays: "",
   });
 
@@ -146,6 +153,7 @@ export function LecturerForm({ initialData, onSuccess, updateLecturerList }: Lec
       name: "",
       lecturerCode: "",
       rfidUid: "",
+      status: "",
       teachingDays: "",
     };
 
@@ -156,6 +164,11 @@ export function LecturerForm({ initialData, onSuccess, updateLecturerList }: Lec
 
     if (lecturerCode.trim().length < 1) {
       newErrors.lecturerCode = "Kode dosen wajib diisi";
+      valid = false;
+    }
+
+    if (!status) {
+      newErrors.lecturerCode = "Status wajib dipilih";
       valid = false;
     }
 
@@ -190,7 +203,7 @@ export function LecturerForm({ initialData, onSuccess, updateLecturerList }: Lec
         lecturerCode,
         rfidUid,
         teachingDays,
-        status: initialData?.status || "tidak hadir",
+        status: status || "belum hadir",
         lastUpdated: Date.now(),
       };
 
@@ -198,13 +211,13 @@ export function LecturerForm({ initialData, onSuccess, updateLecturerList }: Lec
         // Update existing lecturer
         const lecturerRef = ref(database, `lecturers/${initialData.id}`);
         await update(lecturerRef, lecturerData);
-        updateLecturerList({ ...lecturerData, id: initialData.id});
+        updateLecturerList({ ...lecturerData, id: initialData.id });
       } else {
         // Add new lecturer
         const lecturersRef = ref(database, "lecturers");
         const newLecturerRef = push(lecturersRef);
         await set(newLecturerRef, lecturerData);
-        updateLecturerList({ ...lecturerData, id: newLecturerRef.key || ""});
+        updateLecturerList({ ...lecturerData, id: newLecturerRef.key || "" });
 
         // Reset form after successful submission
         setName("");
@@ -318,6 +331,38 @@ export function LecturerForm({ initialData, onSuccess, updateLecturerList }: Lec
           <p className="text-sm text-destructive">{errors.rfidUid}</p>
         )}
       </div>
+
+      {initialData && (
+        <div className="space-y-2">
+          <Label htmlFor="status">Status</Label>
+          <Select
+            value={status}
+            onValueChange={(value) =>
+              setStatus(
+                value as
+                  | "masuk"
+                  | "pulang"
+                  | "tidak hadir"
+                  | "hadir"
+                  | "belum hadir"
+              )
+            }
+            disabled={isSubmitting}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Pilih Status Dosen" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="masuk">Hadir</SelectItem>
+              <SelectItem value="pulang">Pulang</SelectItem>
+              <SelectItem value="belum hadir">Belum Hadir</SelectItem>
+            </SelectContent>
+          </Select>
+          {errors.status && (
+            <p className="text-sm text-destructive">{errors.status}</p>
+          )}
+        </div>
+      )}
 
       <div className="space-y-2">
         <div>

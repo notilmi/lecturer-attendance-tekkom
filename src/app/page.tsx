@@ -21,6 +21,7 @@ import { Label } from "@/components/ui/label";
 import { LecturePresence } from "@/lib/schema/lecture-presence";
 import { getDayName } from "@/utils/day-utils";
 import { useAuth } from "@/contexts/auth-context";
+import InstallButton from "@/components/install-button";
 
 export default function HomePage() {
   const [lecturers, setLecturers] = useState<Lecturer[]>([]);
@@ -51,11 +52,10 @@ export default function HomePage() {
 
   // Determine if a lecturer is present (either checked in or stayed)
   const isLecturerPresent = (lecturer: Lecturer) => {
-    // If status is 'masuk' (checked in) OR 'pulang' (checked out), consider them present
     return (
       lecturer.status === "masuk" ||
       lecturer.status === "pulang" ||
-      lecturer.status === "hadir"
+      lecturer.status === "belum hadir"
     );
   };
 
@@ -212,16 +212,34 @@ export default function HomePage() {
         <div className="w-full px-4 flex h-16 items-center justify-between">
           <div className="flex items-center gap-2 font-bold">
             <Clock className="h-5 w-5 text-primary" />
-            <span>Sistem Absensi Dosen</span>
+            <span className="text-sm sm:text-base">Sistem Absensi Dosen</span>
           </div>
 
           <div className="flex items-center gap-2">
             {user ? (
               <>
-                <Button variant="outline" size="sm">
-                  <User className="mx-auto h-10 w-10 text-muted-foreground" />
-                  <p className="font-medium text-sm">{user?.email}</p>
+                {/* Mobile: hanya ikon user */}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="flex sm:hidden"
+                  title={user.email ?? undefined}
+                >
+                  <User className="h-5 w-5 text-muted-foreground" />
                 </Button>
+
+                {/* Desktop: ikon + email */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="hidden sm:flex items-center gap-2"
+                >
+                  <User className="h-5 w-5 text-muted-foreground" />
+                  <p className="font-medium text-sm max-w-[120px] truncate">
+                    {user?.email}
+                  </p>
+                </Button>
+
                 <Link href="/admin/dashboard" passHref>
                   <Button variant="outline" size="sm">
                     Dashboard
@@ -249,11 +267,6 @@ export default function HomePage() {
               <CalendarIcon className="h-4 w-4 mr-1" />
               <span>{formattedDate}</span>
             </div>
-            {/* <Link href="/history" passHref>
-              <Button variant="link" size="sm" className="font-medium">
-                Lihat Riwayat
-              </Button>
-            </Link> */}
           </div>
         </div>
 
@@ -328,11 +341,13 @@ export default function HomePage() {
                       className={`${isPresent ? "border-green-500" : ""}`}
                     >
                       <CardHeader className="pb-2">
-                        <div className="flex justify-between items-center">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
                           <CardTitle className="truncate">
                             {lecturer.name}
                           </CardTitle>
-                          <Badge className={statusInfo.color}>
+                          <Badge
+                            className={`${statusInfo.color} sm:self-auto self-start mt-3`}
+                          >
                             {statusInfo.text}
                           </Badge>
                         </div>
@@ -479,7 +494,7 @@ export default function HomePage() {
                                 ? "Check-in"
                                 : presence.status === "pulang"
                                 ? "Check-out"
-                                : "Hadir"}
+                                : "Belum hadir"}
                             </Badge>
                           </div>
                         </div>

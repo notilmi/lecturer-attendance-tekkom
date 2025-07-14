@@ -2,26 +2,14 @@
 
 import * as React from "react"
 import {
-  IconCamera,
-  IconChartBar,
   IconDashboard,
   IconDatabase,
-  IconFileAi,
   IconFileDescription,
-  IconFileWord,
-  IconFolder,
-  IconHelp,
-  IconInnerShadowTop,
-  IconListDetails,
   IconReport,
-  IconSearch,
-  IconSettings,
   IconUsers,
 } from "@tabler/icons-react"
 
-import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
@@ -33,6 +21,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/contexts/auth-context"
+import Image from "next/image";
 
 const data = {
   user: {
@@ -47,40 +36,32 @@ const data = {
       icon: IconDashboard, // Tetap karena sudah cocok
     },
     {
-      title: "Admin Management",
+      title: "Kelola Admin",
       url: "/admin/admins",
       icon: IconUsers, // Mengganti IconListDetails menjadi IconUsers
     },
     {
-      title: "Lecture Management",
+      title: "Kelola Dosen",
       url: "/admin/lecturers",
       icon: IconReport, // Lebih cocok untuk manajemen dosen
     },
     {
-      title: "RFID Management",
+      title: "Kelola RFID",
       url: "/admin/rfids",
       icon: IconDatabase, // Mengganti IconChartBar menjadi IconDatabase
     },
     {
-      title: "Presence Management",
+      title: "Kelola Kehadiran",
       url: "/admin/attendances",
       icon: IconFileDescription, // Lebih cocok menggambarkan absensi atau laporan kehadiran
     },
-    // {
-    //   title: "Settings",
-    //   url: "/admin/settings",
-    //   icon: IconSettings, // Mengganti IconChartBar menjadi IconSettings
-    // },
   ],
 }
 
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
-  const { user } = useAuth();
-
-  console.log(user);
-  
+  const { user } = useAuth();  
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -92,7 +73,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <a href="#">
-                <IconInnerShadowTop className="!size-5" />
+                <Image
+                  src="/logo_tekkom.png"
+                  alt="Logo"
+                  width={28}
+                  height={28}/>
                 <span className="text-base font-semibold">Admin Tekkom.</span>
               </a>
             </SidebarMenuButton>

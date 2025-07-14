@@ -59,14 +59,14 @@ export function UseLecturePage() {
     }
   }, []);
 
-  const filteredLecturers = 
+  const filteredLecturers =
     lecturers.filter(
       (lecturer) =>
         lecturer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         lecturer.lecturerCode.toLowerCase().includes(searchQuery.toLowerCase())
-  ) 
+    ).reverse();
 
-  
+
 
   const updateLectureList = useCallback((lecturer: Lecturer) => {
     setLecturers((prev) => {
@@ -88,10 +88,12 @@ export function UseLecturePage() {
   const handleDeleteLecturer = useCallback(async () => {
     if (!selectedLecturer) return;
 
+    setShowDeleteDialog(false);
+    setSelectedLecturer(null);
     setIsDeleting(true);
+
     try {
       const lecturerRef = ref(database, `lecturers/${selectedLecturer.id}`);
-
       await remove(lecturerRef);
 
       toast("Berhasil", {
@@ -99,8 +101,7 @@ export function UseLecturePage() {
       });
 
       setLecturers((prev) => prev.filter((l) => l.id !== selectedLecturer.id));
-      setShowDeleteDialog(false);
-      setSelectedLecturer(null);
+
     } catch (error: any) {
       console.error("Error deleting lecturer:", error);
       toast("Error", {
@@ -109,6 +110,7 @@ export function UseLecturePage() {
     } finally {
       setIsDeleting(false);
     }
+
   }, [selectedLecturer]);
 
   return {
@@ -116,17 +118,17 @@ export function UseLecturePage() {
     setLecturers,
     searchQuery,
     setSearchQuery,
-    isLoading, 
+    isLoading,
     setIsLoading,
-    selectedLecturer, 
+    selectedLecturer,
     setSelectedLecturer,
-    showDeleteDialog, 
+    showDeleteDialog,
     setShowDeleteDialog,
-    showEditDialog, 
-    setShowEditDialog, 
-    showAddDialog, 
-    setShowAddDialog, 
-    isDeleting, 
+    showEditDialog,
+    setShowEditDialog,
+    showAddDialog,
+    setShowAddDialog,
+    isDeleting,
     setIsDeleting,
     filteredLecturers,
     handleDeleteLecturer,
