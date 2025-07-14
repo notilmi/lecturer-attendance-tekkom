@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { ref, get, set, remove } from "firebase/database";
+import { ref, get, set, remove, off, onValue } from "firebase/database";
 import { database } from "@/lib/firebase";
 import { Lecturer } from "@/lib/schema/lecturer";
 import { RfidTag } from "@/lib/schema/rfid";
@@ -20,67 +20,59 @@ export function UseRfidPage() {
 
   // Fetch RFID tags and lecturers data
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
+    setIsLoading(true);
 
-        // Fetch RFID tags
-        const rfidRef = ref(database, "rfid_register");
-        const rfidSnapshot = await get(rfidRef);
+    const rfidRef = ref(database, "rfid_register");
+    const lecturersRef = ref(database, "lecturers");
 
-        // Fetch lecturers to check assignments
-        const lecturersRef = ref(database, "lecturers");
-        const lecturersSnapshot = await get(lecturersRef);
+    const unsubRfid = onValue(rfidRef, (rfidSnapshot) => {
+      const rfidData = rfidSnapshot.val();
 
+      if (!rfidData) {
+        setRfidTags([]);
+        setIsLoading(false); // ✅ selesai loading meskipun kosong
+        return;
+      }
+
+      onValue(lecturersRef, (lecturersSnapshot) => {
+        const lecturersDataRaw = lecturersSnapshot.val();
         let lecturersData: any[] = [];
-        if (lecturersSnapshot.exists()) {
-          const data = lecturersSnapshot.val();
-          lecturersData = Object.keys(data).map((key) => ({
+
+        if (lecturersDataRaw) {
+          lecturersData = Object.entries(lecturersDataRaw).map(([key, value]: any) => ({
             id: key,
-            ...data[key],
+            ...value,
           }));
           setLecturers(lecturersData);
         }
 
-        if (rfidSnapshot.exists()) {
-          const data = rfidSnapshot.val();
-          const formattedData: RfidTag[] = Object.keys(data).map((key) => ({
+        const formattedTags = Object.entries(rfidData).map(([key, value]: any) => {
+          const assignedLecturer = lecturersData.find((lect) => lect.rfidUid === key);
+          return {
             uid: key,
-            value: data[key],
-          }));
-
-          // Check if each RFID is assigned to a lecturer
-          formattedData.forEach((tag) => {
-            const assignedLecturer = lecturersData.find(
-              (lecturer) => lecturer.rfidUid === tag.uid
-            );
-            if (assignedLecturer) {
-              tag.isAssigned = true;
-              tag.assignedTo = {
+            value,
+            isAssigned: !!assignedLecturer,
+            assignedTo: assignedLecturer
+              ? {
                 id: assignedLecturer.id,
                 name: assignedLecturer.name,
-              };
-            } else {
-              tag.isAssigned = false;
-            }
-          });
-
-          setRfidTags(formattedData);
-        } else {
-          setRfidTags([]);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        toast("Error", {
-          description: "Gagal memuat data RFID.",
+              }
+              : undefined,
+          };
         });
-      } finally {
-        setIsLoading(false);
-      }
-    };
 
-    fetchData();
-  }, [toast]);
+        setRfidTags(formattedTags);
+        setIsLoading(false); // ✅ SELESAI SETELAH SEMUA SIAP
+      });
+    });
+
+    return () => {
+      off(rfidRef);
+      off(lecturersRef);
+    };
+  }, []);
+
+
 
   // Filter tags based on search query
   const filteredTags = rfidTags.filter(
@@ -88,7 +80,7 @@ export function UseRfidPage() {
       tag.uid.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (tag.assignedTo?.name &&
         tag.assignedTo.name.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  ).reverse();
 
   // Validate RFID UID (only alphanumeric characters)
   const isValidRfidUid = (uid: string) => {

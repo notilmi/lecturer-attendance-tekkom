@@ -5,6 +5,7 @@ import { database } from "@/lib/firebase";
 import { get, onValue, ref, remove, off } from "firebase/database";
 import { toast } from "sonner";
 import { Admin } from "@/lib/schema/admin";
+import { useAuth } from "@/contexts/auth-context";
 
 export function UseAdminPage() {
   const [admins, setAdmins] = useState<Admin[]>([]);
@@ -15,6 +16,9 @@ export function UseAdminPage() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const { user } = useAuth();
+
 
   useEffect(() => {
     const adminsRef = ref(database, "admins");
@@ -59,10 +63,13 @@ export function UseAdminPage() {
     }
   }, []);
 
-  const filteredLecturers = 
-    admins.filter((admin) => admin.email.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredLecturers = admins.filter(
+    (admin) =>
+      admin.email.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      admin.email.toLowerCase() !== user?.email?.toLowerCase()
+  );
 
-  
+
 
   const updateAdminList = useCallback((admin: Admin) => {
     setAdmins((prev) => {
@@ -112,17 +119,17 @@ export function UseAdminPage() {
     setAdmins,
     searchQuery,
     setSearchQuery,
-    isLoading, 
+    isLoading,
     setIsLoading,
-    selectedAdmin, 
+    selectedAdmin,
     setSelectedAdmin,
-    showDeleteDialog, 
+    showDeleteDialog,
     setShowDeleteDialog,
-    showEditDialog, 
-    setShowEditDialog, 
-    showAddDialog, 
-    setShowAddDialog, 
-    isDeleting, 
+    showEditDialog,
+    setShowEditDialog,
+    showAddDialog,
+    setShowAddDialog,
+    isDeleting,
     setIsDeleting,
     filteredLecturers,
     handleDeleteAdmin,

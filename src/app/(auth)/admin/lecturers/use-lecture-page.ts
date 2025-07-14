@@ -59,12 +59,14 @@ export function UseLecturePage() {
     }
   }, []);
 
-  const filteredLecturers =
-    lecturers.filter(
+  const filteredLecturers = lecturers
+    .slice() // untuk menghindari mutasi langsung
+    .sort((a, b) => (b.lastUpdated ?? 0) - (a.lastUpdated ?? 0))
+    .filter(
       (lecturer) =>
         lecturer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         lecturer.lecturerCode.toLowerCase().includes(searchQuery.toLowerCase())
-    ).reverse();
+    );
 
 
 
@@ -93,21 +95,22 @@ export function UseLecturePage() {
     setIsDeleting(true);
 
     try {
+      console.log("Deleting:", selectedLecturer.id);
+
       const lecturerRef = ref(database, `lecturers/${selectedLecturer.id}`);
       await remove(lecturerRef);
+
+      console.log("Deleted from Firebase");
+
+      setLecturers((prev) => prev.filter((l) => l.id !== selectedLecturer.id));
 
       toast("Berhasil", {
         description: `Data dosen ${selectedLecturer.name} berhasil dihapus.`,
       });
-
-      setLecturers((prev) => prev.filter((l) => l.id !== selectedLecturer.id));
-
     } catch (error: any) {
       console.error("Error deleting lecturer:", error);
-      toast("Error", {
-        description: `Gagal menghapus data: ${error.message}`,
-      });
-    } finally {
+    }
+    finally {
       setIsDeleting(false);
     }
 

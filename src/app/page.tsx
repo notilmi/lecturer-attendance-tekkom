@@ -54,8 +54,7 @@ export default function HomePage() {
   const isLecturerPresent = (lecturer: Lecturer) => {
     return (
       lecturer.status === "masuk" ||
-      lecturer.status === "pulang" ||
-      lecturer.status === "belum hadir"
+      lecturer.status === "pulang" 
     );
   };
 
