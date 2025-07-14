@@ -126,7 +126,7 @@ export default function LoginForm() {
       </div>
       <div className="relative hidden md:block w-full h-full min-h-screen">
         <Image
-          src="https://teknikkomputer.polsri.ac.id/wp-content/uploads/2023/02/BG_FIRST_FEATURED.png"
+          src="/polsri.png"
           alt="Ilustrasi Login"
           fill
           className="object-cover"
